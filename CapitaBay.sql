@@ -70,7 +70,7 @@ CREATE TABLE StockAccount (
 SocialSecurityNumber INTEGER,
 AccountNumber 	CHAR(12)		NOT NULL,
 AccountCreateDate	DATE			NOT NULL,
-PRIMARY KEY(AccountNumber),
+PRIMARY KEY(SocialSecurityNumber,AccountNumber),
 FOREIGN KEY(SocialSecurityNumber) REFERENCES   
 Customer(SocialSecurityNumber)
 	ON DELETE NO ACTION
