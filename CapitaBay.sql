@@ -3,9 +3,9 @@
 * Team: Capita Bay
 * Members: Patrick Sullivan, Hui Liang
 *******************************************************************************/
-drop database IF EXISTS CapitaBay;
-create database CapitaBay;
-USE CapitaBay;
+drop database IF EXISTS CAPITABAY;
+create database CAPITABAY;
+USE CAPITABAY;
 
 /*******************************************************************************  
 Location: represents where the person lives in our db *******************************************************************************/
@@ -292,7 +292,7 @@ BEGIN
   	VALUES(sp_tso,sp_oid,sp_acctNum,sp_ss);
 End ^_^
 
-
+DELIMITER ;
 
 -- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
 -- 	AS SELECT ST.StockSymbol, S.SharePrice, ST.StockName, ST.StockType

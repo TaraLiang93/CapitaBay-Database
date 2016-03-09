@@ -1,4 +1,4 @@
-USE CapitaBay;
+USE CAPITABAY;
 
 source ./data/Location_data.sql;
 source ./data/Person_data.sql;
