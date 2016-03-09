@@ -296,13 +296,13 @@ End ^_^
 
 -- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
 -- 	AS SELECT ST.StockSymbol, S.SharePrice, ST.StockName, ST.StockType
--- 	From  Individual Stock S, Stock Table ST
+-- 	From  IndividualStock S, StockTable ST
 -- 	WHERE ST.StockSymbol. = S.StockSymbol
 
 
 -- CREATE VIEW CapitaBay.ShowCurrentHoldings (AccountNumber, StockSymbol) AS		 
 -- SELECT S.AccountNumber, S.StockSymbol
--- FROM Customer.C , Stock Portfolio S
+-- FROM Customer.C , StockPortfolio S
 -- WHERE C.AccountNumber = S.AccountNumber;
 	
 
