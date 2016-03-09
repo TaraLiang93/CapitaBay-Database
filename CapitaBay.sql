@@ -3,9 +3,9 @@
 * Team: Capita Bay
 * Members: Patrick Sullivan, Hui Liang
 *******************************************************************************/
-drop database if exists CapitaBay;
+drop database IF EXISTS CapitaBay;
 create database CapitaBay;
-use CapitaBay;
+USE CapitaBay;
 
 /*******************************************************************************  
 Location: represents where the person lives in our db *******************************************************************************/
