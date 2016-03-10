@@ -68,11 +68,11 @@ Stock Account: represents an account for a customer having 0 or more accounts
 *******************************************************************************/
 CREATE TABLE StockAccount (
 SocialSecurityNumber INTEGER,
-AccountNumber 	CHAR(12)		NOT NULL,
-AccountCreateDate	DATE			NOT NULL,
+AccountNumber CHAR(12),
+AccountCreateDate DATE NOT NULL,
+-- PRIMARY KEY(SocialSecurityNumber),
 PRIMARY KEY(SocialSecurityNumber,AccountNumber),
-FOREIGN KEY(SocialSecurityNumber) REFERENCES   
-Customer(SocialSecurityNumber)
+FOREIGN KEY(SocialSecurityNumber) REFERENCES Customer(SocialSecurityNumber)
 	ON DELETE NO ACTION
 	ON UPDATE CASCADE
 );
@@ -92,8 +92,8 @@ Individual Stock: represents a stock price and share number at a certain period 
 *********************************************************************************/
 CREATE TABLE IndividualStock (
 	SharePrice			FLOAT,
-	StockSymbol			VARCHAR(32),
-	Stockdate				TIMESTAMP,
+	StockSymbol			VARCHAR(10),
+	Stockdate				TIME,
 	NumberOfSharesAvaliable	INTEGER,
 	PRIMARY KEY(StockSymbol,StockDate),
 	FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
@@ -108,10 +108,10 @@ CREATE TABLE Orders (
 NumberOfShares	 INTEGER,
 PricePerShare	 FLOAT,
 Percentage		 FLOAT,
-Time 			TIMESTAMP,
+Time 			TIME,
 OrderID			INTEGER,
 EmployeeID		INTEGER		NOT NULL,
-AccountNumber	CHAR(12)		NOT NULL,
+AccountNumber	CHAR(12),
 StockSymbol		VARCHAR(10)		NOT NULL,
 Orderdate		DATE	NOT NULL,
 PRIMARY KEY(OrderID),
@@ -130,7 +130,8 @@ FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
 );	
 
 /*******************************************************************************  
-Market: information market order *******************************************************************************/
+Market: information market order 
+*******************************************************************************/
 CREATE TABLE Market (
 OrderID 		INTEGER,
 OrderType		VARCHAR(32),
@@ -140,8 +141,9 @@ ON DELETE NO ACTION
 ON UPDATE CASCADE
 	
 );
-/*******************************************************************************  
-MarketOnClose: information Market on Close order *******************************************************************************/
+/******************************************************************************  
+MarketOnClose: information Market on Close order 
+******************************************************************************/
 CREATE TABLE MarketOnClose (
 OrderID 		INTEGER,
 OrderType		VARCHAR(32),
@@ -152,7 +154,8 @@ ON UPDATE CASCADE
 	
 );
 /*******************************************************************************  
-TrailingStop: information Trailing Stop order *******************************************************************************/
+TrailingStop: information Trailing Stop order
+ *******************************************************************************/
 CREATE TABLE TrailingStop (
 OrderID 		INTEGER,
 OrderType		VARCHAR(32),
@@ -164,7 +167,8 @@ ON UPDATE CASCADE
 	
 );
 /*******************************************************************************  
-Hidden Stop: information hidden stop order *******************************************************************************/
+Hidden Stop: information hidden stop order
+ *******************************************************************************/
 CREATE TABLE HiddenStop (
 OrderID 		INTEGER,
 PricePerShare		FLOAT,
@@ -244,18 +248,18 @@ End ^_^
 CREATE PROCEDURE addStockTable(IN st_ss VARCHAR(10),IN st_st VARCHAR(32),IN st_sn VARCHAR(32))
 BEGIN
 	INSERT INTO CapitaBay.StockTable(StockSymbol,StockType,StockType,StockName)
-  	VALUES(st_ss,st_st, st_sn);
+  	VALUES(st_ss,st_st,st_sn);
 End ^_^
 
 
-CREATE PROCEDURE addIndividualStock(IN is_sp FLOAT,IN is_ss VARCHAR(10),IN is_sd TIMESTAMP,IN is_nosa INTEGER)
+CREATE PROCEDURE addIndividualStock(IN is_sp FLOAT,IN is_ss VARCHAR(10),IN is_sd TIME,IN is_nosa INTEGER)
 BEGIN
-	INSERT INTO CapitaBay.StockTable(SharePrice,StockSymbol,Stockdate,NumberOfSharesAvaliable)
+	INSERT INTO CapitaBay.IndividualStock(SharePrice,StockSymbol,Stockdate,NumberOfSharesAvaliable)
   	VALUES(is_sp,is_ss,is_sd,is_nosa);
 End ^_^
 
 
-CREATE PROCEDURE addOrder(IN o_nos INTEGER,IN o_pps FLOAT,IN o_percent FLOAT,IN o_time TIMESTAMP,
+CREATE PROCEDURE addOrder(IN o_nos INTEGER,IN o_pps FLOAT,IN o_percent FLOAT,IN o_time TIME,
 						  IN o_oid INTEGER,IN o_eid INTEGER,IN o_acctNum CHAR(12),IN o_ss VARCHAR(10),IN o_od DATE)
 BEGIN
 	INSERT INTO CapitaBay.Orders(NumberOfShares,PricePerShare,Percentage,Time,OrderID,EmployeeID ,AccountNumber,StockSymbol,Orderdate)
