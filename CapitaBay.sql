@@ -106,7 +106,7 @@ Order: information relating to the buying and selling of a number of shares of a
 CREATE TABLE Orders (
 SocialSecurityNumber INTEGER,
 NumberOfShares	 INTEGER,
-Time 			TIME,
+OrderTime 			TIME,
 OrderID			INTEGER AUTO_INCREMENT,
 EmployeeSSN		INTEGER		NOT NULL,
 AccountNumber	INTEGER,
@@ -256,13 +256,15 @@ BEGIN
   	VALUES(is_sp,is_ss,is_sd,is_nosa);
 End ^_^
 
-CREATE PROCEDURE addOrder(IN o_ssn INTEGER,IN o_nos INTEGER,IN o_time TIME,
-				IN o_essn INTEGER,IN o_an INTEGER,IN o_ss VARCHAR(10),IN o_od DATE)
-	INSERT INTO CAPITABAY.Orders(SocialSecurityNumber,NumberOfShares,Time,EmployeeSSN,AccountNumber,StockSymbol,Orderdate)
-  	VALUES(o_ssn,o_nos,o_time,o_essn,o_an,o_ss,o_od);
-End ^_^
+CREATE PROCEDURE addOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE)
+BEGIN 
+	INSERT INTO CAPITABAY.Orders(SocialSecurityNumber, NumberOfShares, 
+		OrderTime, EmployeeSSN, AccountNumber, StockSymbol, Orderdate)
+	VALUES(ssn, nos, o_time, e_ssn, an, ss, dat);
+END^_^
 
-CREATE PROCEDURE addMarket(IN m_oid INTEGER,IN m_ot VARCHAR(32))
+CREATE PROCEDURE addMarket(IN m_oid INTEGER,IN m_ot VARCHAR(32) )
 BEGIN
 	INSERT INTO CAPITABAY.Market(OrderID,OrderType)
   	VALUES(m_oid,m_ot);
