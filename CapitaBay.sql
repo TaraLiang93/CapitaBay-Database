@@ -287,7 +287,12 @@ BEGIN
   	VALUES(m_oid,m_pps,m_ot);
 End ^_^
 
-
+CREATE PROCEDURE addTransaction(IN t_tid INTEGER, IN t_oid INTEGER, IN t_eid INTEGER, IN t_ssn INTEGER, IN t_accNum INTEGER,
+	IN t_ss VARCHAR(10), IN t_fee FLOAT, IN t_dp TIME, IN t_pps FLOAT)
+BEGIN 
+	INSERT INTO CAPITABAY.Transaction(TransID, OrderID, EmployeeID, SocialSecurityNumber, AccountNumber, StockSymbol, Fee, DateProcessed,PricePerShare)
+	VALUES(t_tid, t_oid, t_eid, t_ssn, t_accNum, t_ss, t_fee, t_dp,t_pps);
+END ^_^
 
 DELIMITER ;
 
