@@ -93,7 +93,7 @@ Individual Stock: represents a stock price and share number at a certain period 
 CREATE TABLE IndividualStock (
 	SharePrice			FLOAT,
 	StockSymbol			VARCHAR(10),
-	Stockdate				TIME,
+	Stockdate				DATETIME,
 	NumberOfSharesAvaliable	INTEGER,
 	PRIMARY KEY(StockSymbol,StockDate),
 	FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
@@ -180,9 +180,9 @@ ON UPDATE CASCADE
 	
 );
 
-/*******************************************************************************
+/******************************************************************************
 Transaction: information when a order is processed and carried out
-*******************************************************************************/
+******************************************************************************/
 CREATE TABLE Transaction(
 TransID		INTEGER,
 OrderID		INTEGER,
@@ -251,7 +251,7 @@ BEGIN
 End ^_^
 
 
-CREATE PROCEDURE addIndividualStock(IN is_sp FLOAT,IN is_ss VARCHAR(10),IN is_sd TIME,IN is_nosa INTEGER)
+CREATE PROCEDURE addIndividualStock(IN is_sp FLOAT,IN is_ss VARCHAR(10),IN is_sd DATETIME,IN is_nosa INTEGER)
 BEGIN
 	INSERT INTO CAPITABAY.IndividualStock(SharePrice,StockSymbol,Stockdate,NumberOfSharesAvaliable)
   	VALUES(is_sp,is_ss,is_sd,is_nosa);
@@ -262,7 +262,7 @@ CREATE PROCEDURE addOrder(IN o_nos INTEGER, IN o_time TIME, IN o_oid INTEGER,IN 
 	,IN o_acctNum CHAR(12),IN o_ss VARCHAR(10),IN o_od DATE, IN o_ssn INTEGER)
 BEGIN
 	INSERT INTO CAPITABAY.Orders(NumberOfShares,Time,OrderID,EmployeeID ,AccountNumber,StockSymbol,Orderdate,SocialSecurityNumber )
-  	VALUES(o_nos,o_time,o_oid,o_eid,o_acctNum,o_ss,o_od, o_ssn;
+  	VALUES(o_nos,o_time,o_oid,o_eid,o_acctNum,o_ss,o_od, o_ssn);
 End ^_^
 
 CREATE PROCEDURE addMarket(IN m_oid INTEGER,IN m_ot VARCHAR(32))
@@ -289,11 +289,11 @@ BEGIN
   	VALUES(m_oid,m_pps,m_ot);
 End ^_^
 
-CREATE PROCEDURE addTransaction(IN t_tid INTEGER, IN t_oid INTEGER, IN t_eid INTEGER, IN t_ssn INTEGER, IN t_accNum INTEGER,
+CREATE PROCEDURE addTransaction(IN t_tid INTEGER, IN t_eid INTEGER, IN t_ssn INTEGER, IN t_accNum INTEGER,
 	IN t_ss VARCHAR(10), IN t_fee FLOAT, IN t_dp TIME, IN t_pps FLOAT)
 BEGIN 
-	INSERT INTO CAPITABAY.Transaction(TransID, OrderID, EmployeeID, SocialSecurityNumber, AccountNumber, StockSymbol, Fee, DateProcessed,PricePerShare)
-	VALUES(t_tid, t_oid, t_eid, t_ssn, t_accNum, t_ss, t_fee, t_dp,t_pps);
+	INSERT INTO CAPITABAY.Transaction(TransID, EmployeeID, SocialSecurityNumber, AccountNumber, StockSymbol, Fee, DateProcessed,PricePerShare)
+	VALUES(t_tid, t_eid, t_ssn, t_accNum, t_ss, t_fee, t_dp,t_pps);
 END ^_^
 
 DELIMITER ;
