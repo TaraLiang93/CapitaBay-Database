@@ -68,7 +68,7 @@ Stock Account: represents an account for a customer having 0 or more accounts
 *******************************************************************************/
 CREATE TABLE StockAccount (
 SocialSecurityNumber INTEGER,
-AccountNumber CHAR(12),
+AccountNumber INTEGER,
 AccountCreateDate DATE NOT NULL,
 -- PRIMARY KEY(SocialSecurityNumber),
 PRIMARY KEY(SocialSecurityNumber,AccountNumber),
@@ -105,17 +105,18 @@ CREATE TABLE IndividualStock (
 Order: information relating to the buying and selling of a number of shares of a certain stock
   ******************************************************************************/
 CREATE TABLE Orders (
+SocialSecurityNumber INTEGER,
 NumberOfShares	 INTEGER,
-PricePerShare	 FLOAT,
+PricePerShare	 FLOAT Check(PricePerShare>=0),
 Percentage		 FLOAT,
 Time 			TIME,
 OrderID			INTEGER,
 EmployeeID		INTEGER		NOT NULL,
-AccountNumber	CHAR(12),
+AccountNumber	INTEGER,
 StockSymbol		VARCHAR(10)		NOT NULL,
 Orderdate		DATE	NOT NULL,
 PRIMARY KEY(OrderID),
-FOREIGN KEY(AccountNumber) REFERENCES StockAccount(AccountNumber)
+FOREIGN KEY(SocialSecurityNumber,AccountNumber) REFERENCES StockAccount(SocialSecurityNumber,AccountNumber)
 	ON DELETE NO ACTION
 	ON UPDATE CASCADE,
 FOREIGN KEY(EmployeeID) REFERENCES Employee(EmployeeID)
@@ -141,6 +142,7 @@ ON DELETE NO ACTION
 ON UPDATE CASCADE
 	
 );
+
 /******************************************************************************  
 MarketOnClose: information Market on Close order 
 ******************************************************************************/
@@ -180,35 +182,53 @@ ON UPDATE CASCADE
 	
 );
 
--- CREATE ASSERTION PositiveOrderPrice
--- CHECK(NOT EXIST(
--- SELECT * FROM Order O
--- WHERE O.Fee < 0)
--- ); 
+/*******************************************************************************
+Transaction: information when a order is processed and carried out
+*******************************************************************************/
+CREATE TABLE Transaction(
+TransID		INTEGER,
+OrderID		INTEGER,
+EmployeeID INTEGER,
+SocialSecurityNumber INTEGER,
+AccountNumber INTEGER,
+StockSymbol		VARCHAR(10),
+Fee			FLOAT NOT NULL,
+DateProcessed 	TIME,
+PricePerShare	FLOAT CHECK(PricePerShare>=0),
+PRIMARY KEY(TransID),
+FOREIGN KEY(OrderID) REFERENCES Orders(OrderID) ON DELETE NO ACTION ON UPDATE CASCADE,
+FOREIGN KEY(EmployeeID) REFERENCES Employee(EmployeeID) ON DELETE NO ACTION ON UPDATE CASCADE,
+FOREIGN KEY(SocialSecurityNumber,AccountNumber) REFERENCES StockAccount(SocialSecurityNumber,AccountNumber)
+	ON DELETE NO ACTION
+	ON UPDATE CASCADE,
+FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol) ON DELETE NO ACTION ON UPDATE CASCADE
 
+);
 
 /*******************************************************************************  
-Stock Portfolio: information relating to a Customer’s stock holdings 
+Stock Portfolio: information relating to a Customer’s stock holdings )
 *******************************************************************************/
 CREATE TABLE StockPortfolio (
-TotalSharesOwned	INTEGER,
-OrderID		INTEGER,
-AccountNumber	CHAR(12),
-StockSymbol		VARCHAR(10),
-PRIMARY KEY(AccountNumber,StockSymbol),
-FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
-	ON DELETE NO ACTION
-	ON UPDATE CASCADE,
-FOREIGN KEY(AccountNumber) REFERENCES StockAccount(AccountNumber)
-	ON DELETE NO ACTION
-	ON UPDATE CASCADE,
-FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
-	ON DELETE NO ACTION
-	ON UPDATE CASCADE
-);
+SocialSecurityNumber INTEGER,
+ TotalSharesOwned	INTEGER,
+ OrderID		INTEGER,
+ AccountNumber	INTEGER,
+ StockSymbol		VARCHAR(10),
+ PRIMARY KEY(AccountNumber,StockSymbol),
+ FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
+ 	ON DELETE NO ACTION
+ 	ON UPDATE CASCADE,
+ FOREIGN KEY(SocialSecurityNumber,AccountNumber) REFERENCES StockAccount(SocialSecurityNumber,AccountNumber)
+ 	ON DELETE NO ACTION
+ 	ON UPDATE CASCADE,
+ FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
+ 	ON DELETE NO ACTION
+ 	ON UPDATE CASCADE
+ );
 
 
 DELIMITER ^_^
+
 
 /*Addss the locations*/
 CREATE PROCEDURE addLocation(IN lcl_zipCode INTEGER,IN lcl_city VARCHAR(32),lcl_state VARCHAR(20))
@@ -298,19 +318,19 @@ End ^_^
 
 DELIMITER ;
 
--- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
--- 	AS SELECT ST.StockSymbol, S.SharePrice, ST.StockName, ST.StockType
--- 	From  IndividualStock S, StockTable ST
--- 	WHERE ST.StockSymbol. = S.StockSymbol
+-- -- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
+-- -- 	AS SELECT ST.StockSymbol, S.SharePrice, ST.StockName, ST.StockType
+-- -- 	From  IndividualStock S, StockTable ST
+-- -- 	WHERE ST.StockSymbol. = S.StockSymbol
 
 
--- CREATE VIEW CapitaBay.ShowCurrentHoldings (AccountNumber, StockSymbol) AS		 
--- SELECT S.AccountNumber, S.StockSymbol
--- FROM Customer.C , StockPortfolio S
--- WHERE C.AccountNumber = S.AccountNumber;
+-- -- CREATE VIEW CapitaBay.ShowCurrentHoldings (AccountNumber, StockSymbol) AS		 
+-- -- SELECT S.AccountNumber, S.StockSymbol
+-- -- FROM Customer.C , StockPortfolio S
+-- -- WHERE C.AccountNumber = S.AccountNumber;
 	
 
--- CREATE VIEW CapitaBay.MakeEmailList (FirstName, LastName, Email) AS
---  SELECT C.FirstName, C.LastName, C.Email
--- From Customer C;
+-- -- CREATE VIEW CapitaBay.MakeEmailList (FirstName, LastName, Email) AS
+-- --  SELECT C.FirstName, C.LastName, C.Email
+-- -- From Customer C;
 
