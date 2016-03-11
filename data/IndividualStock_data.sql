@@ -2,6 +2,6 @@
 
 
 -- WE DON"T KNOW THE times for the stocks
-call addIndividualStock(34.23,'GM','12:45:90',1000);
+call addIndividualStock(34.23,'GM','12:45:00',1000);
 call addIndividualStock(91.41,'IBM','11:00:55',500);
 call addIndividualStock(9.0,'F','10:45:12',750);
