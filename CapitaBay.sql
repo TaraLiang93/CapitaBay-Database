@@ -107,8 +107,6 @@ Order: information relating to the buying and selling of a number of shares of a
 CREATE TABLE Orders (
 SocialSecurityNumber INTEGER,
 NumberOfShares	 INTEGER,
-PricePerShare	 FLOAT Check(PricePerShare>=0),
-Percentage		 FLOAT,
 Time 			TIME,
 OrderID			INTEGER,
 EmployeeID		INTEGER		NOT NULL,
@@ -205,26 +203,7 @@ FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol) ON DELETE NO ACTION 
 
 );
 
-/*******************************************************************************  
-Stock Portfolio: information relating to a Customer’s stock holdings )
-*******************************************************************************/
-CREATE TABLE StockPortfolio (
-SocialSecurityNumber INTEGER,
- TotalSharesOwned	INTEGER,
- OrderID		INTEGER,
- AccountNumber	INTEGER,
- StockSymbol		VARCHAR(10),
- PRIMARY KEY(AccountNumber,StockSymbol),
- FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
- 	ON DELETE NO ACTION
- 	ON UPDATE CASCADE,
- FOREIGN KEY(SocialSecurityNumber,AccountNumber) REFERENCES StockAccount(SocialSecurityNumber,AccountNumber)
- 	ON DELETE NO ACTION
- 	ON UPDATE CASCADE,
- FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
- 	ON DELETE NO ACTION
- 	ON UPDATE CASCADE
- );
+
 
 
 DELIMITER ^_^
@@ -279,11 +258,11 @@ BEGIN
 End ^_^
 
 
-CREATE PROCEDURE addOrder(IN o_nos INTEGER,IN o_pps FLOAT,IN o_percent FLOAT,IN o_time TIME,
-						  IN o_oid INTEGER,IN o_eid INTEGER,IN o_acctNum CHAR(12),IN o_ss VARCHAR(10),IN o_od DATE)
+CREATE PROCEDURE addOrder(IN o_nos INTEGER, IN o_time TIME, IN o_oid INTEGER,IN o_eid INTEGER
+	,IN o_acctNum CHAR(12),IN o_ss VARCHAR(10),IN o_od DATE, IN o_ssn INTEGER)
 BEGIN
-	INSERT INTO CAPITABAY.Orders(NumberOfShares,PricePerShare,Percentage,Time,OrderID,EmployeeID ,AccountNumber,StockSymbol,Orderdate)
-  	VALUES(o_nos,o_pps,o_percent,o_time,o_oid,o_eid,o_acctNum,o_ss,o_od);
+	INSERT INTO CAPITABAY.Orders(NumberOfShares,Time,OrderID,EmployeeID ,AccountNumber,StockSymbol,Orderdate,SocialSecurityNumber )
+  	VALUES(o_nos,o_time,o_oid,o_eid,o_acctNum,o_ss,o_od, o_ssn;
 End ^_^
 
 CREATE PROCEDURE addMarket(IN m_oid INTEGER,IN m_ot VARCHAR(32))
@@ -306,15 +285,11 @@ End ^_^
 
 CREATE PROCEDURE addHiddenStop(IN m_oid INTEGER,IN  m_pps FLOAT,IN m_ot VARCHAR(32))
 BEGIN
-	INSERT INTO CAPITABAY.TrailingStop(OrderID,OrderType,Percentage)
+	INSERT INTO CAPITABAY.HiddenStop(OrderID,PricePerShare,PricePerShare)
   	VALUES(m_oid,m_pps,m_ot);
 End ^_^
 
-CREATE PROCEDURE addStockPortfolio(IN sp_tso INTEGER,IN sp_oid INTEGER,IN sp_acctNum CHAR(12),IN sp_ss VARCHAR(10))
-BEGIN
-	INSERT INTO CAPITABAY.TrailingStop(OrderID,AccountNumber,StockSymbol)
-  	VALUES(sp_tso,sp_oid,sp_acctNum,sp_ss);
-End ^_^
+
 
 DELIMITER ;
 
