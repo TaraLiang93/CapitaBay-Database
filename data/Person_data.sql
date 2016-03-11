@@ -6,4 +6,4 @@ call addPerson("John","Smith","789 Peace Blvd.","315-443-4321",93536,333333333);
 call addPerson("Lewis","Philip","135 Knowledge Lane","516-666-8888",11794,444444444);
 
 call addPerson("David","Smith","123 College road","516-666-8888",11790,123456789);
-call addPerson("David","Warren","456 Sunken Stree","631-632-9987",11794,789123456);
+call addPerson("David","Warren","456 Sunken Street","631-632-9987",11794,789123456);
