@@ -38,9 +38,8 @@ SocialSecurityNumber	 INTEGER,
 Position 		VARCHAR(12) 		NOT NULL,
 StartDate 		DATE			NOT NULL,
 HourlyRate 		FLOAT			NOT NULL,
-EmployeeID 		INTEGER,
-PRIMARY KEY(EmployeeID),
-UNIQUE(SocialSecurityNumber),
+PRIMARY KEY(SocialSecurityNumber),
+-- UNIQUE(SocialSecurityNumber),
 FOREIGN KEY(SocialSecurityNumber) REFERENCES Person(SocialSecurityNumber)
 	ON DELETE NO ACTION
 	ON UPDATE CASCADE
@@ -108,8 +107,8 @@ CREATE TABLE Orders (
 SocialSecurityNumber INTEGER,
 NumberOfShares	 INTEGER,
 Time 			TIME,
-OrderID			INTEGER,
-EmployeeID		INTEGER		NOT NULL,
+OrderID			INTEGER AUTO_INCREMENT,
+EmployeeSSN		INTEGER		NOT NULL,
 AccountNumber	INTEGER,
 StockSymbol		VARCHAR(10)		NOT NULL,
 Orderdate		DATE	NOT NULL,
@@ -117,7 +116,7 @@ PRIMARY KEY(OrderID),
 FOREIGN KEY(SocialSecurityNumber,AccountNumber) REFERENCES StockAccount(SocialSecurityNumber,AccountNumber)
 	ON DELETE NO ACTION
 	ON UPDATE CASCADE,
-FOREIGN KEY(EmployeeID) REFERENCES Employee(EmployeeID)
+FOREIGN KEY(EmployeeSSN) REFERENCES Employee(SocialSecurityNumber)
 	ON DELETE NO ACTION
 	ON UPDATE CASCADE,
 FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
@@ -186,7 +185,7 @@ Transaction: information when a order is processed and carried out
 CREATE TABLE Transaction(
 TransID		INTEGER,
 OrderID		INTEGER,
-EmployeeID INTEGER,
+EmployeeSSN INTEGER,
 SocialSecurityNumber INTEGER,
 AccountNumber INTEGER,
 StockSymbol		VARCHAR(10),
@@ -195,7 +194,7 @@ DateProcessed 	TIME,
 PricePerShare	FLOAT CHECK(PricePerShare>=0),
 PRIMARY KEY(TransID),
 FOREIGN KEY(OrderID) REFERENCES Orders(OrderID) ON DELETE NO ACTION ON UPDATE CASCADE,
-FOREIGN KEY(EmployeeID) REFERENCES Employee(EmployeeID) ON DELETE NO ACTION ON UPDATE CASCADE,
+FOREIGN KEY(EmployeeSSN) REFERENCES Employee(SocialSecurityNumber) ON DELETE NO ACTION ON UPDATE CASCADE,
 FOREIGN KEY(SocialSecurityNumber,AccountNumber) REFERENCES StockAccount(SocialSecurityNumber,AccountNumber)
 	ON DELETE NO ACTION
 	ON UPDATE CASCADE,
@@ -224,10 +223,10 @@ BEGIN
 End ^_^
 
 
-CREATE PROCEDURE addEmployee(IN e_ssn INTEGER,IN e_pos VARCHAR(12),IN e_date DATE,IN e_hrRate FLOAT,IN e_id INTEGER)
+CREATE PROCEDURE addEmployee(IN e_ssn INTEGER,IN e_pos VARCHAR(12),IN e_date DATE,IN e_hrRate FLOAT)
 BEGIN
-	INSERT INTO CAPITABAY.Employee(SocialSecurityNumber,Position,StartDate,HourlyRate,EmployeeID)
-  	VALUES(e_ssn,e_pos,e_date,e_hrRate,e_id);
+	INSERT INTO CAPITABAY.Employee(SocialSecurityNumber,Position,StartDate,HourlyRate)
+  	VALUES(e_ssn,e_pos,e_date,e_hrRate);
 End ^_^
 	
 CREATE PROCEDURE addCustomer(IN c_ssn INTEGER,IN c_rate FLOAT,IN c_ccn CHAR(20),IN c_email VARCHAR(50))
@@ -257,12 +256,11 @@ BEGIN
   	VALUES(is_sp,is_ss,is_sd,is_nosa);
 End ^_^
 
-
-CREATE PROCEDURE addOrder(IN o_nos INTEGER, IN o_time TIME, IN o_oid INTEGER,IN o_eid INTEGER
-	,IN o_acctNum CHAR(12),IN o_ss VARCHAR(10),IN o_od DATE, IN o_ssn INTEGER)
+CREATE PROCEDURE addOrder(IN o_ssn INTEGER,IN o_nos INTEGER,IN o_time TIME,
+				IN o_essn INTEGER,IN o_an INTEGER,IN o_ss VARCHAR(10),IN o_od DATE)
 BEGIN
-	INSERT INTO CAPITABAY.Orders(NumberOfShares,Time,OrderID,EmployeeID ,AccountNumber,StockSymbol,Orderdate,SocialSecurityNumber )
-  	VALUES(o_nos,o_time,o_oid,o_eid,o_acctNum,o_ss,o_od, o_ssn;
+	INSERT INTO CAPITABAY.Orders(SocialSecurityNumber,NumberOfShares,Time,EmployeeSSN,AccountNumber,StockSymbol,Orderdate)
+  	VALUES(o_ssn,o_nos,o_time,o_essn,o_an,o_ss,o_od);
 End ^_^
 
 CREATE PROCEDURE addMarket(IN m_oid INTEGER,IN m_ot VARCHAR(32))
