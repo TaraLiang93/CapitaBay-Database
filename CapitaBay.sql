@@ -168,9 +168,9 @@ ON DELETE NO ACTION
 ON UPDATE CASCADE
 	
 );
-/*******************************************************************************  
+/******************************************************************************  
 Hidden Stop: information hidden stop order
- *******************************************************************************/
+ ******************************************************************************/
 CREATE TABLE HiddenStop (
 OrderID 		INTEGER,
 PricePerShare		FLOAT,
@@ -233,48 +233,48 @@ DELIMITER ^_^
 /*Addss the locations*/
 CREATE PROCEDURE addLocation(IN lcl_zipCode INTEGER,IN lcl_city VARCHAR(32),lcl_state VARCHAR(20))
 BEGIN
-	INSERT INTO CapitaBay.Location(ZipCode, City, State)
+	INSERT INTO CAPITABAY.Location(ZipCode, City, State)
   	VALUES(lcl_zipCode,lcl_city,lcl_state);
 End ^_^
 
 
 CREATE PROCEDURE addPerson(IN p_fname VARCHAR(32),IN p_lname VARCHAR(32),IN p_addr VARCHAR(128),IN p_tele CHAR(13), IN p_zipcode INTEGER,IN p_ssn INTEGER)
 BEGIN
-	INSERT INTO CapitaBay.Person(FirstName, LastName, Address,Telephone, ZipCode, SocialSecurityNumber)
+	INSERT INTO CAPITABAY.Person(FirstName, LastName, Address,Telephone, ZipCode, SocialSecurityNumber)
   	VALUES(p_fname,p_lname,p_addr,p_tele,p_zipcode,p_ssn);
 End ^_^
 
 
 CREATE PROCEDURE addEmployee(IN e_ssn INTEGER,IN e_pos VARCHAR(12),IN e_date DATE,IN e_hrRate FLOAT,IN e_id INTEGER)
 BEGIN
-	INSERT INTO CapitaBay.Employee(SocialSecurityNumber,Position,StartDate,HourlyRate,EmployeeID)
+	INSERT INTO CAPITABAY.Employee(SocialSecurityNumber,Position,StartDate,HourlyRate,EmployeeID)
   	VALUES(e_ssn,e_pos,e_date,e_hrRate,e_id);
 End ^_^
 	
 CREATE PROCEDURE addCustomer(IN c_ssn INTEGER,IN c_rate FLOAT,IN c_ccn CHAR(20),IN c_email VARCHAR(50))
 BEGIN
-	INSERT INTO CapitaBay.Customer(SocialSecurityNumber,Rating,CreditCardNumber,Email)
+	INSERT INTO CAPITABAY.Customer(SocialSecurityNumber,Rating,CreditCardNumber,Email)
   	VALUES(c_ssn,c_rate ,c_ccn,c_email);
 End ^_^
 
 
 CREATE PROCEDURE addStockAccount(IN sa_ssn INTEGER,IN sa_acctNum CHAR(12),IN sa_acctDate DATE)
 BEGIN
-	INSERT INTO CapitaBay.StockAccount(SocialSecurityNumber,AccountNumber,AccountCreateDate)
+	INSERT INTO CAPITABAY.StockAccount(SocialSecurityNumber,AccountNumber,AccountCreateDate)
   	VALUES(sa_ssn,sa_acctNum,sa_acctDate );
 End ^_^
 
 
 CREATE PROCEDURE addStockTable(IN st_ss VARCHAR(10),IN st_st VARCHAR(32),IN st_sn VARCHAR(32))
 BEGIN
-	INSERT INTO CapitaBay.StockTable(StockSymbol,StockType,StockType,StockName)
+	INSERT INTO CAPITABAY.StockTable(StockSymbol,StockType,StockName)
   	VALUES(st_ss,st_st,st_sn);
 End ^_^
 
 
 CREATE PROCEDURE addIndividualStock(IN is_sp FLOAT,IN is_ss VARCHAR(10),IN is_sd TIME,IN is_nosa INTEGER)
 BEGIN
-	INSERT INTO CapitaBay.IndividualStock(SharePrice,StockSymbol,Stockdate,NumberOfSharesAvaliable)
+	INSERT INTO CAPITABAY.IndividualStock(SharePrice,StockSymbol,Stockdate,NumberOfSharesAvaliable)
   	VALUES(is_sp,is_ss,is_sd,is_nosa);
 End ^_^
 
@@ -282,55 +282,55 @@ End ^_^
 CREATE PROCEDURE addOrder(IN o_nos INTEGER,IN o_pps FLOAT,IN o_percent FLOAT,IN o_time TIME,
 						  IN o_oid INTEGER,IN o_eid INTEGER,IN o_acctNum CHAR(12),IN o_ss VARCHAR(10),IN o_od DATE)
 BEGIN
-	INSERT INTO CapitaBay.Orders(NumberOfShares,PricePerShare,Percentage,Time,OrderID,EmployeeID ,AccountNumber,StockSymbol,Orderdate)
+	INSERT INTO CAPITABAY.Orders(NumberOfShares,PricePerShare,Percentage,Time,OrderID,EmployeeID ,AccountNumber,StockSymbol,Orderdate)
   	VALUES(o_nos,o_pps,o_percent,o_time,o_oid,o_eid,o_acctNum,o_ss,o_od);
 End ^_^
 
 CREATE PROCEDURE addMarket(IN m_oid INTEGER,IN m_ot VARCHAR(32))
 BEGIN
-	INSERT INTO CapitaBay.Market(OrderID,OrderType)
+	INSERT INTO CAPITABAY.Market(OrderID,OrderType)
   	VALUES(m_oid,m_ot);
 End ^_^
 
 CREATE PROCEDURE addMarketOnClose(IN m_oid INTEGER,IN m_ot VARCHAR(32))
 BEGIN
-	INSERT INTO CapitaBay.MarketOnClose(OrderID,OrderType)
+	INSERT INTO CAPITABAY.MarketOnClose(OrderID,OrderType)
   	VALUES(m_oid,m_ot);
 End ^_^
 
 CREATE PROCEDURE addTrailingStop(IN m_oid INTEGER,IN m_ot VARCHAR(32),IN  m_percent FLOAT)
 BEGIN
-	INSERT INTO CapitaBay.TrailingStop(OrderID,OrderType,Percentage)
+	INSERT INTO CAPITABAY.TrailingStop(OrderID,OrderType,Percentage)
   	VALUES(m_oid,m_ot,m_percent);
 End ^_^
 
 CREATE PROCEDURE addHiddenStop(IN m_oid INTEGER,IN  m_pps FLOAT,IN m_ot VARCHAR(32))
 BEGIN
-	INSERT INTO CapitaBay.TrailingStop(OrderID,OrderType,Percentage)
+	INSERT INTO CAPITABAY.TrailingStop(OrderID,OrderType,Percentage)
   	VALUES(m_oid,m_pps,m_ot);
 End ^_^
 
 CREATE PROCEDURE addStockPortfolio(IN sp_tso INTEGER,IN sp_oid INTEGER,IN sp_acctNum CHAR(12),IN sp_ss VARCHAR(10))
 BEGIN
-	INSERT INTO CapitaBay.TrailingStop(OrderID,AccountNumber,StockSymbol)
+	INSERT INTO CAPITABAY.TrailingStop(OrderID,AccountNumber,StockSymbol)
   	VALUES(sp_tso,sp_oid,sp_acctNum,sp_ss);
 End ^_^
 
 DELIMITER ;
 
--- -- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
--- -- 	AS SELECT ST.StockSymbol, S.SharePrice, ST.StockName, ST.StockType
--- -- 	From  IndividualStock S, StockTable ST
--- -- 	WHERE ST.StockSymbol. = S.StockSymbol
+-- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
+-- 	AS SELECT ST.StockSymbol, S.SharePrice, ST.StockName, ST.StockType
+-- 	From  IndividualStock S, StockTable ST
+-- 	WHERE ST.StockSymbol. = S.StockSymbol
 
 
--- -- CREATE VIEW CapitaBay.ShowCurrentHoldings (AccountNumber, StockSymbol) AS		 
--- -- SELECT S.AccountNumber, S.StockSymbol
--- -- FROM Customer.C , StockPortfolio S
--- -- WHERE C.AccountNumber = S.AccountNumber;
+-- CREATE VIEW CapitaBay.ShowCurrentHoldings (AccountNumber, StockSymbol) AS		 
+-- SELECT S.AccountNumber, S.StockSymbol
+-- FROM Customer.C , StockPortfolio S
+-- WHERE C.AccountNumber = S.AccountNumber;
 	
 
--- -- CREATE VIEW CapitaBay.MakeEmailList (FirstName, LastName, Email) AS
--- --  SELECT C.FirstName, C.LastName, C.Email
--- -- From Customer C;
+-- CREATE VIEW CapitaBay.MakeEmailList (FirstName, LastName, Email) AS
+--  SELECT C.FirstName, C.LastName, C.Email
+-- From Customer C;
 

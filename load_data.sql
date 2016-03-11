@@ -9,4 +9,4 @@ source ./data/Employee_data.sql;
 source ./data/StockAccount_data.sql;
 
 source ./data/StockTable_data.sql;
--- source ./data/IndividualStock_data.sql;
+source ./data/IndividualStock_data.sql;
