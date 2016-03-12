@@ -108,7 +108,7 @@ SocialSecurityNumber INTEGER,
 NumberOfShares	 INTEGER,
 OrderTime 			TIME,
 OrderID			INTEGER AUTO_INCREMENT,
-EmployeeSSN		INTEGER		NOT NULL,
+EmployeeSSN		INTEGER		,
 AccountNumber	INTEGER,
 StockSymbol		VARCHAR(10)		NOT NULL,
 Orderdate		DATE	NOT NULL,
@@ -117,7 +117,7 @@ FOREIGN KEY(SocialSecurityNumber,AccountNumber) REFERENCES StockAccount(SocialSe
 	ON DELETE NO ACTION
 	ON UPDATE CASCADE,
 FOREIGN KEY(EmployeeSSN) REFERENCES Employee(SocialSecurityNumber)
-	ON DELETE NO ACTION
+	ON DELETE SET NULL
 	ON UPDATE CASCADE,
 FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
 	ON DELETE NO ACTION
@@ -208,7 +208,9 @@ FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol) ON DELETE NO ACTION 
 DELIMITER ^_^
 
 
-/*Addss the locations*/
+/******************************************************************************  
+INSERT QUERIES
+ ******************************************************************************/
 CREATE PROCEDURE addLocation(IN lcl_zipCode INTEGER,IN lcl_city VARCHAR(32),lcl_state VARCHAR(20))
 BEGIN
 	INSERT INTO CAPITABAY.Location(ZipCode, City, State)
@@ -296,6 +298,41 @@ BEGIN
 END ^_^
 
 
+/******************************************************************************  
+UPDATE QUERIES
+ ******************************************************************************/
+CREATE PROCEDURE editEmployee(IN e_ssn INTEGER,IN e_pos VARCHAR(12),IN e_date DATE,IN e_hrRate FLOAT)
+BEGIN
+	UPDATE Employee
+	SET Position=e_pos, StartDate=e_date, HourlyRate=e_hrRate
+  	WHERE SocialSecurityNumber = e_ssn; 
+End ^_^
+
+
+
+
+
+
+
+
+
+/******************************************************************************  
+DELETE QUERIES 
+ ******************************************************************************/
+CREATE PROCEDURE deleteEmployee(IN e_ssn INTEGER)
+BEGIN
+	DELETE FROM Employee
+	WHERE SocialSecurityNumber = e_ssn;
+End ^_^
+
+
+
+
+
+
+/******************************************************************************  
+Manager QUERIES
+ ******************************************************************************/
 CREATE PROCEDURE updateStockPrice(IN e_ssn INTEGER,IN is_ss VARCHAR(10),IN new_sp FLOAT)
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE )
@@ -313,6 +350,40 @@ BEGIN
 
 END ^_^
 
+
+CREATE PROCEDURE manageEmployees(IN reqeust VARCHAR(12),IN e_ssn1 INTEGER,IN e_ssn2 INTEGER,IN e_pos VARCHAR(12),IN e_date DATE,IN e_hrRate FLOAT)
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn1;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		IF reqeust = 'INSERT' THEN
+			call addEmployee(e_ssn2,e_pos,e_date,e_hrRate);
+		ELSEIF reqeust = 'UPDATE' THEN
+			call editEmployee(e_ssn2,e_pos,e_date,e_hrRate);
+		ELSEIF reqeust = 'DELETE' THEN
+			call deleteEmployee(e_ssn2);
+		END IF;
+	END IF;
+
+END ^_^
+
+
+
+/******************************************************************************  
+CustomerRep QUERIES
+ ******************************************************************************/
+
+
+
+
+/******************************************************************************  
+Customer QUERIES
+ ******************************************************************************/
 
 DELIMITER ;
 
