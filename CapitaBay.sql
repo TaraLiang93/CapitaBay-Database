@@ -295,6 +295,25 @@ BEGIN
 	VALUES(t_tid, t_eid, t_ssn, t_accNum, t_ss, t_fee, t_dp,t_pps);
 END ^_^
 
+
+CREATE PROCEDURE updateStockPrice(IN e_ssn INTEGER,IN is_ss VARCHAR(10),IN new_sp FLOAT)
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE )
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		UPDATE IndividualStock
+		SET SharePrice = new_sp
+		WHERE StockSymbol = is_ss;
+	END IF;
+
+END ^_^
+
+
 DELIMITER ;
 
 -- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
