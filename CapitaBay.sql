@@ -372,6 +372,40 @@ BEGIN
 
 END ^_^
 
+CREATE PROCEDURE getSalesReportForMonth(IN e_ssn INTEGER, IN month INTEGER)
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		Select *
+		FROM Orders
+		WHERE MONTH(OrderDate) = month; -- Takes both integer and string
+	END IF;
+
+END ^_^
+
+CREATE PROCEDURE listAllStocks(IN e_ssn INTEGER)
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		SELECT DISTINCT S.StockSymbol, S.StockType,S.StockName, I.SharePrice, I.Stockdate,I.NumberOfSharesAvaliable
+		FROM StockTable S, IndividualStock I
+		WHERE S.StockSymbol = I.StockSymbol;
+	END IF;
+
+END ^_^
+
 
 
 /******************************************************************************  
