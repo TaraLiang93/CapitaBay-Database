@@ -406,6 +406,29 @@ BEGIN
 
 END ^_^
 
+CREATE PROCEDURE listOrders(IN e_ssn INTEGER,IN ssn1 INTEGER,IN ss VARCHAR(10))
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		IF ssn1 <> -1 THEN 
+			SELECT *
+			FROM Orders
+			WHERE SocialSecurityNumber = ssn1;
+		ELSEIF ss <> "" THEN
+			SELECT * 
+			FROM Orders
+			WHERE StockSymbol = ss;
+		END IF; 
+	END IF;
+
+END ^_^
+
 
 
 /******************************************************************************  
