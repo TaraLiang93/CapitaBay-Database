@@ -5,4 +5,4 @@
 -- End ^_^
 
 
-call addTrailingStop(2, 'sell', .10);
+call addTrailingStop(222222222,10,'21:10:15',123456789,1,'IBM','2016-02-29','sell', .10);

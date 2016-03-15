@@ -92,7 +92,8 @@ Individual Stock: represents a stock price and share number at a certain period 
 CREATE TABLE IndividualStock (
 	SharePrice			FLOAT,
 	StockSymbol			VARCHAR(10),
-	Stockdate				DATETIME,
+	Stockdate				DATE,
+	Stocktime				TIME,
 	NumberOfSharesAvaliable	INTEGER,
 	PRIMARY KEY(StockSymbol,StockDate),
 	FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
@@ -184,7 +185,6 @@ Transaction: information when a order is processed and carried out
 ******************************************************************************/
 CREATE TABLE Transaction(
 TransID		INTEGER,
-OrderID		INTEGER,
 EmployeeSSN INTEGER,
 SocialSecurityNumber INTEGER,
 AccountNumber INTEGER,
@@ -193,7 +193,7 @@ Fee			FLOAT NOT NULL,
 DateProcessed 	TIME,
 PricePerShare	FLOAT CHECK(PricePerShare>=0),
 PRIMARY KEY(TransID),
-FOREIGN KEY(OrderID) REFERENCES Orders(OrderID) ON DELETE NO ACTION ON UPDATE CASCADE,
+FOREIGN KEY(TransID) REFERENCES Orders(OrderID) ON DELETE NO ACTION ON UPDATE CASCADE,
 FOREIGN KEY(EmployeeSSN) REFERENCES Employee(SocialSecurityNumber) ON DELETE SET NULL ON UPDATE CASCADE,
 FOREIGN KEY(SocialSecurityNumber,AccountNumber) REFERENCES StockAccount(SocialSecurityNumber,AccountNumber)
 	ON DELETE NO ACTION
@@ -211,6 +211,14 @@ DELIMITER ^_^
 /******************************************************************************  
 INSERT QUERIES
  ******************************************************************************/
+CREATE PROCEDURE addTransaction(IN o_tid INTEGER, IN t_eid INTEGER, IN t_ssn INTEGER, IN t_accNum INTEGER,
+	IN t_ss VARCHAR(10), IN t_fee FLOAT, IN t_dp TIME, IN t_pps FLOAT)
+BEGIN 
+	INSERT INTO CAPITABAY.Transaction(TransID, EmployeeSSN, SocialSecurityNumber, AccountNumber, StockSymbol, Fee, DateProcessed,PricePerShare)
+	VALUES(o_tid, t_eid, t_ssn, t_accNum, t_ss, t_fee, t_dp,t_pps);
+END ^_^
+
+
 CREATE PROCEDURE addLocation(IN lcl_zipCode INTEGER,IN lcl_city VARCHAR(32),lcl_state VARCHAR(20))
 BEGIN
 	INSERT INTO CAPITABAY.Location(ZipCode, City, State)
@@ -252,10 +260,10 @@ BEGIN
 End ^_^
 
 
-CREATE PROCEDURE addIndividualStock(IN is_sp FLOAT,IN is_ss VARCHAR(10),IN is_sd DATETIME,IN is_nosa INTEGER)
+CREATE PROCEDURE addIndividualStock(IN is_sp FLOAT,IN is_ss VARCHAR(10),IN is_dat DATE, IN is_time TIME,IN is_nosa INTEGER)
 BEGIN
-	INSERT INTO CAPITABAY.IndividualStock(SharePrice,StockSymbol,Stockdate,NumberOfSharesAvaliable)
-  	VALUES(is_sp,is_ss,is_sd,is_nosa);
+	INSERT INTO CAPITABAY.IndividualStock(SharePrice,StockSymbol,Stockdate, Stocktime, NumberOfSharesAvaliable)
+  	VALUES(is_sp,is_ss,is_dat, is_time,is_nosa);
 End ^_^
 
 CREATE PROCEDURE addOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
@@ -266,35 +274,72 @@ BEGIN
 	VALUES(ssn, nos, o_time, e_ssn, an, ss, dat);
 END^_^
 
-CREATE PROCEDURE addMarket(IN m_oid INTEGER,IN m_ot VARCHAR(32) )
+
+CREATE PROCEDURE addMarket(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32) )
 BEGIN
-	INSERT INTO CAPITABAY.Market(OrderID,OrderType)
-  	VALUES(m_oid,m_ot);
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat);
+	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
+	INSERT INTO CAPITABAY.Market(OrderID, OrderType)
+  	VALUES(@o_id, m_ot);
+  	call queryPricePerShare(o_time, dat);
+  	call CalcFee(@price, nos);
+  	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, @price);
 End ^_^
 
-CREATE PROCEDURE addMarketOnClose(IN m_oid INTEGER,IN m_ot VARCHAR(32))
+CREATE PROCEDURE addMarketOnClose(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32))
 BEGIN
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat);
+	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.MarketOnClose(OrderID,OrderType)
-  	VALUES(m_oid,m_ot);
+  	VALUES(@o_id,m_ot);
+  	call queryPricePerShare(o_time, dat);
+  	call CalcFee(@price, nos);
+  	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, @price);
 End ^_^
 
-CREATE PROCEDURE addTrailingStop(IN m_oid INTEGER,IN m_ot VARCHAR(32),IN  m_percent FLOAT)
+CREATE PROCEDURE addTrailingStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32),IN  m_percent FLOAT)
 BEGIN
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat);
+	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.TrailingStop(OrderID,OrderType,Percentage)
-  	VALUES(m_oid,m_ot,m_percent);
+  	VALUES(@o_id,m_ot,m_percent);
 End ^_^
 
-CREATE PROCEDURE addHiddenStop(IN m_oid INTEGER,IN  m_pps FLOAT,IN m_ot VARCHAR(32))
+CREATE PROCEDURE addHiddenStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN  m_pps FLOAT,IN m_ot VARCHAR(32))
 BEGIN
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat);
+	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.HiddenStop(OrderID,PricePerShare,PricePerShare)
-  	VALUES(m_oid,m_pps,m_ot);
+  	VALUES(@o_id,m_pps,m_ot);
 End ^_^
 
-CREATE PROCEDURE addTransaction(IN t_tid INTEGER, IN t_eid INTEGER, IN t_ssn INTEGER, IN t_accNum INTEGER,
-	IN t_ss VARCHAR(10), IN t_fee FLOAT, IN t_dp TIME, IN t_pps FLOAT)
+/******************************************************************************  
+Supplment QUERIES for inserting
+ ******************************************************************************/
+
+CREATE PROCEDURE queryOrderId(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE)
 BEGIN 
-	INSERT INTO CAPITABAY.Transaction(TransID, EmployeeID, SocialSecurityNumber, AccountNumber, StockSymbol, Fee, DateProcessed,PricePerShare)
-	VALUES(t_tid, t_eid, t_ssn, t_accNum, t_ss, t_fee, t_dp,t_pps);
+	SELECT o.OrderID INTO @o_id FROM Orders o WHERE (o.SocialSecurityNumber = ssn AND 
+		(o.NumberOfShares = nos AND (o.OrderTime = o_time AND (o.EmployeeSSN = e_ssn AND
+		(o.AccountNumber = an AND (o.StockSymbol = ss))))));
+END ^_^
+
+CREATE PROCEDURE CalcFee(IN price FLOAT, IN numShare INTEGER)
+BEGIN
+	SELECT (price * numShare)*0.05 INTO @fee;
+END ^_^
+
+CREATE PROCEDURE queryPricePerShare(IN o_time TIME, IN dat DATE)
+BEGIN 
+	SELECT i.SharePrice INTO @price
+	FROM IndividualStock i 
+	Where i.Stockdate < dat AND i.Stocktime < o_time 
+	ORDER BY i.StockDate DESC LIMIT 1;
 END ^_^
 
 
@@ -307,10 +352,6 @@ BEGIN
 	SET Position=e_pos, StartDate=e_date, HourlyRate=e_hrRate
   	WHERE SocialSecurityNumber = e_ssn; 
 End ^_^
-
-
-
-
 
 
 

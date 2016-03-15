@@ -4,4 +4,4 @@
 --   	VALUES(m_oid,m_ot);
 -- End ^_^
 
-call addMarket(1,'buy');
+call addMarket(444444444,75,'21:04:00',789123456,1,'GM','2016-03-09','buy');
