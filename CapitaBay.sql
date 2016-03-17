@@ -244,7 +244,8 @@ BEGIN
 End ^_^
 
 
-CREATE PROCEDURE addPerson(IN p_fname VARCHAR(32),IN p_lname VARCHAR(32),IN p_addr VARCHAR(128),IN p_tele CHAR(13), IN p_zipcode INTEGER,IN p_ssn INTEGER)
+CREATE PROCEDURE addPerson(IN p_fname VARCHAR(32),IN p_lname VARCHAR(32),IN p_addr VARCHAR(128),IN p_tele CHAR(13),
+ IN p_zipcode INTEGER,IN p_ssn INTEGER)
 BEGIN
 	INSERT INTO CAPITABAY.Person(FirstName, LastName, Address,Telephone, ZipCode, SocialSecurityNumber)
   	VALUES(p_fname,p_lname,p_addr,p_tele,p_zipcode,p_ssn);
@@ -366,6 +367,12 @@ BEGIN
 	ORDER BY i.StockDate DESC LIMIT 1;
 END ^_^
 
+CREATE PROCEDURE queryNumShareAva(IN stockSym VARCHAR(10))
+BEGIN 
+	SELECT i.numShare INTO @numShareAva
+	FROM StockTable i
+	Where i.StockSymbol = stockSym;
+END ^_^
 
 /******************************************************************************  
 UPDATE QUERIES
@@ -377,10 +384,19 @@ BEGIN
   	WHERE SocialSecurityNumber = e_ssn; 
 End ^_^
 
-CREATE PROCEDURE updateStockTable()
+CREATE PROCEDURE updateStockTablePrice(IN stockSym VARCHAR(10), IN price FLOAT, IN s_date DATE,
+	IN s_time TIME)
 BEGIN
+	UPDATE StockTable
+	SET SharePrice = price, Stockdate = s_date, Stocktime = s_time
+	WHERE StockSymbol = stockSym;
+	call queryNumShareAva(stockSym);
+	call addStockHistory(price, stockSym, s_date, s_time, @numShareAva);
 END ^_^
 
+CREATE PROCEDURE updateStockTableNumShare()
+BEGIN
+END^_^
 
 
 /******************************************************************************  
