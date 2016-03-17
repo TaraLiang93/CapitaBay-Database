@@ -17,7 +17,8 @@ CREATE TABLE Location(
 );
 
 /*******************************************************************************  
-Person: represents a user who will access our database  *******************************************************************************/
+Person: represents a user who will access our database  
+*******************************************************************************/
 CREATE TABLE Person (
 FirstName 		VARCHAR(32)	 NOT NULL, 
 LastName 		VARCHAR(32)	 NOT NULL,
@@ -32,7 +33,8 @@ FOREIGN KEY(ZipCode) REFERENCES Location(ZipCode)
 );
 
 /*******************************************************************************  
-Employee: represents a user who will facilitate the buying and selling of stocks  *******************************************************************************/
+Employee: represents a user who will facilitate the buying and selling of stocks
+  *******************************************************************************/
 CREATE TABLE Employee (
 SocialSecurityNumber	 INTEGER,
 Position 		VARCHAR(12) 		NOT NULL,
@@ -49,7 +51,8 @@ FOREIGN KEY(SocialSecurityNumber) REFERENCES Person(SocialSecurityNumber)
 -- -- 	CHECK ( VALUE IN ( “CustomerRep”, “Manager” ) )
 
 /*******************************************************************************  
-Customer: represents a user who will be buying and selling stocks  *******************************************************************************/
+Customer: represents a user who will be buying and selling stocks 
+ *******************************************************************************/
 CREATE TABLE Customer (
 SocialSecurityNumber INTEGER,
 Rating 			FLOAT			NOT NULL,
@@ -87,7 +90,9 @@ CREATE TABLE StockTable (
 	Stockdate				DATE,
 	Stocktime				TIME,
 	NumberOfSharesAvaliable	INTEGER,
-	PRIMARY KEY(StockSymbol)
+	PRIMARY KEY(StockSymbol),
+	UNIQUE KEY(Stockdate),
+	UNIQUE KEY(Stocktime)
 );
 
 /*********************************************************************************
@@ -99,22 +104,16 @@ CREATE TABLE StockHistory (
 	Stockdate				DATE,
 	Stocktime				TIME,
 	NumberOfSharesAvaliable	INTEGER,
-	PRIMARY KEY(StockSymbol,Stockdate,SharePrice,Stocktime, NumberOfSharesAvaliable),
+	PRIMARY KEY(StockSymbol,Stockdate,Stocktime),
 	FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
-	ON DELETE NO ACTION
-	ON UPDATE CASCADE,
-	FOREIGN KEY(Stockdate) REFERENCES StockTable(Orderdate)
-	ON DELETE NO ACTION
-	ON UPDATE CASCADE,
-	FOREIGN KEY(Stocktime) REFERENCES StockTable(OrderTime)
-	ON DELETE NO ACTION
-	ON UPDATE CASCADE,
-	FOREIGN KEY(SharePrice) REFERENCES StockTable(SharePrice)
-	ON DELETE NO ACTION
-	ON UPDATE CASCADE,
-	FOREIGN KEY(NumberOfSharesAvaliable) REFERENCES StockTable(NumberOfSharesAvaliable)
-	ON DELETE NO ACTION
-	ON UPDATE CASCADE
+		ON DELETE NO ACTION
+		ON UPDATE CASCADE,
+	FOREIGN KEY(Stockdate) REFERENCES StockTable(Stockdate)
+		ON DELETE NO ACTION 
+		ON UPDATE CASCADE,
+	FOREIGN KEY(Stocktime) REFERENCES StockTable(Stocktime)
+		ON DELETE NO ACTION
+		ON UPDATE CASCADE
 );
 
 /******************************************************************************  
@@ -291,7 +290,6 @@ End ^_^
 CREATE PROCEDURE addOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN price FLOAT)
 BEGIN 
---Pat i change things here, please double check my work plz
 
 	INSERT INTO CAPITABAY.Orders(SocialSecurityNumber, NumberOfShares, 
 		OrderTime, EmployeeSSN, AccountNumber, StockSymbol, Orderdate, SharePrice)
@@ -304,7 +302,7 @@ CREATE PROCEDURE addMarket(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME,
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32) )
 BEGIN
   	call queryPricePerShare(o_time, dat);
-	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat);
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price);
 	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.Market(OrderID, OrderType)
   	VALUES(@o_id, m_ot);
@@ -342,9 +340,9 @@ BEGIN
   	VALUES(@o_id,m_pps,m_ot);
 End ^_^
 
-/******************************************************************************  
+/*****************************************************************************  
 Supplment QUERIES for inserting
- ******************************************************************************/
+ *****************************************************************************/
 
 CREATE PROCEDURE queryOrderId(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE)
