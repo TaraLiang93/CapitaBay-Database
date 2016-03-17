@@ -524,6 +524,29 @@ CustomerRep QUERIES
 Customer QUERIES
  ******************************************************************************/
 
+
+
+CREATE PROCEDURE recentOrderInfo(IN e_ssn INTEGER)
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE )
+
+	DECLARE customerSSN	 INTEGER;
+
+	SELECT C.SocialSecurityNumber INTO customerSSN
+	FROM Customer C
+	WHERE C.SocialSecurityNumber = e_ssn;
+
+	IF customerSSN <> NULL THEN
+		SELECT *
+		FROM Orders O 
+		WHERE O.SocialSecurityNumber = e_ssn
+		ORDER BY OrderDate DESC
+		LIMIT 10;
+
+	END IF;
+
+END ^_^
+
 DELIMITER ;
 
 -- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
