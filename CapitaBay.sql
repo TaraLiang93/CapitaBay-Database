@@ -121,7 +121,7 @@ Order: information relating to the buying and selling of a number of shares of a
   ******************************************************************************/
 CREATE TABLE Orders (
 SocialSecurityNumber INTEGER,
-NumberOfShares	 INTEGER,
+NumberOfShares	 INTEGER CHECK(NumberOfShares > 0),
 OrderTime 			TIME,
 OrderID			INTEGER AUTO_INCREMENT,
 EmployeeSSN		INTEGER		,
@@ -391,8 +391,14 @@ BEGIN
 	call addStockHistory(price, stockSym, s_date, s_time, @numShareAva);
 END ^_^
 
-CREATE PROCEDURE updateStockTableNumShare()
+CREATE PROCEDURE updateStockTableNumShare(IN stockSym VARCHAR(10), IN shareAvaliable INTEGER,
+	IN s_date DATE, IN s_time TIME)
 BEGIN
+	UPDATE StockTable
+	SET NumberOfSharesAvaliable = shareAvaliable, Stockdate = s_date, Stocktime = s_time
+	WHERE StockSymbol = stockSym;
+	call queryPricePerShare(s_time, s_date);
+	call addStockHistory(@price, stockSym, s_date, s_time, shareAvaliable);
 END^_^
 
 
@@ -405,6 +411,11 @@ BEGIN
 	WHERE SocialSecurityNumber = e_ssn;
 End ^_^
 
+CREATE PROCEDURE deleteStockTable(IN stockSym VARCHAR(10))
+BEGIN 
+	DELETE FROM StockTable
+	WHERE StockSymbol = stockSym;
+END ^_^
 
 
 
