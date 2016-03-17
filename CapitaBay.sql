@@ -95,8 +95,20 @@ CREATE TABLE IndividualStock (
 	Stockdate				DATE,
 	Stocktime				TIME,
 	NumberOfSharesAvaliable	INTEGER,
-	PRIMARY KEY(StockSymbol,StockDate),
+	PRIMARY KEY(StockSymbol,Stockdate,SharePrice,Stocktime, NumberOfSharesAvaliable),
 	FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
+	ON DELETE NO ACTION
+	ON UPDATE CASCADE,
+	FOREIGN KEY(Stockdate) REFERENCES StockTable(Orderdate)
+	ON DELETE NO ACTION
+	ON UPDATE CASCADE,
+	FOREIGN KEY(Stocktime) REFERENCES StockTable(OrderTime)
+	ON DELETE NO ACTION
+	ON UPDATE CASCADE,
+	FOREIGN KEY(SharePrice) REFERENCES StockTable(SharePrice)
+	ON DELETE NO ACTION
+	ON UPDATE CASCADE,
+	FOREIGN KEY(NumberOfSharesAvaliable) REFERENCES StockTable(NumberOfSharesAvaliable)
 	ON DELETE NO ACTION
 	ON UPDATE CASCADE
 );
@@ -113,6 +125,8 @@ EmployeeSSN		INTEGER		,
 AccountNumber	INTEGER,
 StockSymbol		VARCHAR(10)		NOT NULL,
 Orderdate		DATE	NOT NULL,
+SharePrice			FLOAT,
+NumberOfSharesAvaliable	INTEGER,
 PRIMARY KEY(OrderID),
 FOREIGN KEY(SocialSecurityNumber,AccountNumber) REFERENCES StockAccount(SocialSecurityNumber,AccountNumber)
 	ON DELETE NO ACTION
@@ -267,22 +281,22 @@ BEGIN
 End ^_^
 
 CREATE PROCEDURE addOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
-		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE)
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN price FLOAT)
 BEGIN 
 	INSERT INTO CAPITABAY.Orders(SocialSecurityNumber, NumberOfShares, 
-		OrderTime, EmployeeSSN, AccountNumber, StockSymbol, Orderdate)
-	VALUES(ssn, nos, o_time, e_ssn, an, ss, dat);
+		OrderTime, EmployeeSSN, AccountNumber, StockSymbol, Orderdate, SharePrice)
+	VALUES(ssn, nos, o_time, e_ssn, an, ss, dat, price);
 END^_^
 
 
 CREATE PROCEDURE addMarket(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32) )
 BEGIN
+  	call queryPricePerShare(o_time, dat);
 	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat);
 	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.Market(OrderID, OrderType)
   	VALUES(@o_id, m_ot);
-  	call queryPricePerShare(o_time, dat);
   	call CalcFee(@price, nos);
   	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, @price);
 End ^_^
