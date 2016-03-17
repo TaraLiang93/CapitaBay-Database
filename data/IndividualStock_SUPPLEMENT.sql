@@ -1,1 +1,0 @@
-call updateStockPrice(123456789, 'IBM', 100);

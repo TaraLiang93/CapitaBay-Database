@@ -89,7 +89,7 @@ CREATE TABLE StockTable (
 /*********************************************************************************
 Individual Stock: represents a stock price and share number at a certain period of time.
 *********************************************************************************/
-CREATE TABLE IndividualStock (
+CREATE TABLE StockHistory (
 	SharePrice			FLOAT,
 	StockSymbol			VARCHAR(10),
 	Stockdate				DATE,
@@ -123,7 +123,7 @@ FOREIGN KEY(EmployeeSSN) REFERENCES Employee(SocialSecurityNumber)
 FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
 	ON DELETE NO ACTION
 	ON UPDATE CASCADE
--- FOREIGN KEY(Orderdate) REFERENCES IndividualStock(Stockdate)
+-- FOREIGN KEY(Orderdate) REFERENCES StockHistory(Stockdate)
 -- 	ON DELETE NO ACTION
 -- 	ON UPDATE CASCADE
 );	
@@ -260,9 +260,9 @@ BEGIN
 End ^_^
 
 
-CREATE PROCEDURE addIndividualStock(IN is_sp FLOAT,IN is_ss VARCHAR(10),IN is_dat DATE, IN is_time TIME,IN is_nosa INTEGER)
+CREATE PROCEDURE addStockHistory(IN is_sp FLOAT,IN is_ss VARCHAR(10),IN is_dat DATE, IN is_time TIME,IN is_nosa INTEGER)
 BEGIN
-	INSERT INTO CAPITABAY.IndividualStock(SharePrice,StockSymbol,Stockdate, Stocktime, NumberOfSharesAvaliable)
+	INSERT INTO CAPITABAY.StockHistory(SharePrice,StockSymbol,Stockdate, Stocktime, NumberOfSharesAvaliable)
   	VALUES(is_sp,is_ss,is_dat, is_time,is_nosa);
 End ^_^
 
@@ -271,8 +271,13 @@ CREATE PROCEDURE addOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME,
 BEGIN 
 	INSERT INTO CAPITABAY.Orders(SocialSecurityNumber, NumberOfShares, 
 		OrderTime, EmployeeSSN, AccountNumber, StockSymbol, Orderdate)
+	-- , SharePrice,NumberOfSharesAvaliable)
 	VALUES(ssn, nos, o_time, e_ssn, an, ss, dat);
-END^_^
+
+	-- Copy old data from the table and insert it into the stock tabl
+	-- Now modify the new stock table; 
+	
+END ^_^
 
 
 CREATE PROCEDURE addMarket(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
@@ -337,7 +342,7 @@ END ^_^
 CREATE PROCEDURE queryPricePerShare(IN o_time TIME, IN dat DATE)
 BEGIN 
 	SELECT i.SharePrice INTO @price
-	FROM IndividualStock i 
+	FROM StockHistory i 
 	Where i.Stockdate < dat AND i.Stocktime < o_time 
 	ORDER BY i.StockDate DESC LIMIT 1;
 END ^_^
@@ -384,7 +389,7 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		UPDATE IndividualStock
+		UPDATE StockHistory
 		SET SharePrice = new_sp
 		WHERE StockSymbol = is_ss;
 	END IF;
@@ -441,7 +446,7 @@ BEGIN
 
 	IF currentEmployeePosition = 'Manager' THEN
 		SELECT DISTINCT S.StockSymbol, S.StockType,S.StockName, I.SharePrice, I.Stockdate,I.NumberOfSharesAvaliable
-		FROM StockTable S, IndividualStock I
+		FROM StockTable S, StockHistory I
 		WHERE S.StockSymbol = I.StockSymbol;
 	END IF;
 
@@ -471,6 +476,8 @@ BEGIN
 END ^_^
 
 
+-- recommendation for employees
+-- select StockTable.StockType, COUNT(StockTable.StockType) AS NumberOfType FROM StockTable LEFT JOIN Transaction ON StockTable.StockSymbol = Transaction.StockSymbol WHERE Transaction.SocialSecurityNumber = 222222222 GROUP BY StockType ;
 
 /******************************************************************************  
 CustomerRep QUERIES
@@ -487,7 +494,7 @@ DELIMITER ;
 
 -- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
 -- 	AS SELECT ST.StockSymbol, S.SharePrice, ST.StockName, ST.StockType
--- 	From  IndividualStock S, StockTable ST
+-- 	From  StockHistory S, StockTable ST
 -- 	WHERE ST.StockSymbol. = S.StockSymbol
 
 
