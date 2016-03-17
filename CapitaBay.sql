@@ -83,6 +83,10 @@ CREATE TABLE StockTable (
 	StockSymbol		VARCHAR(10),
 	StockType		VARCHAR(32)	 NOT NULL,
 	StockName		VARCHAR(32)	NOT NULL,
+	SharePrice			FLOAT,
+	Stockdate				DATE,
+	Stocktime				TIME,
+	NumberOfSharesAvaliable	INTEGER,
 	PRIMARY KEY(StockSymbol)
 );
 
@@ -267,10 +271,13 @@ BEGIN
 End ^_^
 
 
-CREATE PROCEDURE addStockTable(IN st_ss VARCHAR(10),IN st_st VARCHAR(32),IN st_sn VARCHAR(32))
+CREATE PROCEDURE addStockTable(IN st_ss VARCHAR(10),IN st_st VARCHAR(32),IN st_sn VARCHAR(32),
+	IN price FLOAT, IN s_date DATE, IN s_time TIME, IN NumberOfShares INTEGER)
 BEGIN
-	INSERT INTO CAPITABAY.StockTable(StockSymbol,StockType,StockName)
-  	VALUES(st_ss,st_st,st_sn);
+	call addStockHistory(price, st_ss, s_date, s_time, NumberOfShares);
+	INSERT INTO CAPITABAY.StockTable(StockSymbol,StockType,StockName, SharePrice,
+		 Stockdate, Stocktime, NumberOfSharesAvaliable)
+  	VALUES(st_ss,st_st,st_sn, price, s_date, s_time, NumberOfShares);
 End ^_^
 
 
@@ -370,7 +377,9 @@ BEGIN
   	WHERE SocialSecurityNumber = e_ssn; 
 End ^_^
 
-
+CREATE PROCEDURE updateStockTable()
+BEGIN
+END ^_^
 
 
 
