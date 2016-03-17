@@ -541,17 +541,18 @@ CREATE PROCEDURE recentOrderInfo(IN e_ssn INTEGER)
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE )
 
-	DECLARE customerSSN	 INTEGER;
+	DECLARE customer	 INTEGER;
 
-	SELECT C.SocialSecurityNumber INTO customerSSN
+	SELECT COUNT(*) INTO customer
 	FROM Customer C
 	WHERE C.SocialSecurityNumber = e_ssn;
 
-	IF customerSSN <> NULL THEN
+	-- If there is atleast one customer 
+	IF customer > 0 THEN
 		SELECT *
 		FROM Orders O 
 		WHERE O.SocialSecurityNumber = e_ssn
-		ORDER BY OrderDate DESC
+		ORDER BY OrderTime ASC,Orderdate DESC
 		LIMIT 10;
 
 	END IF;
