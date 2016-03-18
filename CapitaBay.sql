@@ -541,10 +541,20 @@ END ^_^
 /******************************************************************************  
 CustomerRep QUERIES
  ******************************************************************************/
-CREATE PROCEDURE makeCustomerMailingList()
+CREATE PROCEDURE makeCustomerMailingList(IN e_ssn INTEGER)
 BEGIN
-	SELECT C.Email  
-	FROM Customer C
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'CustomerRep' THEN
+		SELECT C.Email  
+		FROM Customer C;
+	END IF;
+	
+	
 END ^_^
 
 
@@ -595,4 +605,3 @@ DELIMITER ;
 -- CREATE VIEW CapitaBay.MakeEmailList (FirstName, LastName, Email) AS
 --  SELECT C.FirstName, C.LastName, C.Email
 -- From Customer C;
-
