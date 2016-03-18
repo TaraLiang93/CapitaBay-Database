@@ -401,6 +401,20 @@ BEGIN
 	call addStockHistory(@price, stockSym, s_date, s_time, shareAvaliable);
 END^_^
 
+CREATE PROCEDURE editPerson(IN p_fname VARCHAR(32),IN p_lname VARCHAR(32),IN p_addr VARCHAR(128),IN p_tele CHAR(13), IN p_zipcode INTEGER,IN p_ssn INTEGER)
+BEGIN
+	UPDATE Customer
+	SET FirstName = p_fname, LastName = p_lname, Address = p_addr, Telephone = p_tele, ZipCode = p_zipcode 
+	WHERE SocialSecurityNumber = p_ssn;
+End ^_^
+ 
+CREATE PROCEDURE editCustomer(IN c_ssn INTEGER,IN c_rate FLOAT,IN c_ccn CHAR(20),IN c_email VARCHAR(50))
+BEGIN
+	UPDATE Customer
+	SET Rating = c_rate, CreditCardNumber = c_ccn, Email = c_email 
+	WHERE SocialSecurityNumber = c_ssn;
+End ^_^
+
 
 /******************************************************************************  
 DELETE QUERIES 
@@ -527,6 +541,11 @@ END ^_^
 /******************************************************************************  
 CustomerRep QUERIES
  ******************************************************************************/
+CREATE PROCEDURE makeCustomerMailingList()
+BEGIN
+	SELECT C.Email  
+	FROM Customer C
+END ^_^
 
 
 
