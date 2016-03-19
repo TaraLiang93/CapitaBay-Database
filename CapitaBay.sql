@@ -222,13 +222,19 @@ DELIMITER ^_^
 INSERT QUERIES
  ******************************************************************************/
 CREATE PROCEDURE addTransaction(IN o_tid INTEGER, IN t_eid INTEGER, IN t_ssn INTEGER, IN t_accNum INTEGER,
-	IN t_ss VARCHAR(10), IN t_fee FLOAT, IN t_dp DATE, IN t_t TIME, IN t_pps FLOAT)
+	IN t_ss VARCHAR(10), IN t_fee FLOAT, IN t_dp DATE, IN t_t TIME, IN t_pps FLOAT, IN m_ot VARCHAR(32))
 BEGIN 
+	DECLARE newShareAva INTEGER;
 	INSERT INTO CAPITABAY.Transaction(TransID, EmployeeSSN, SocialSecurityNumber, AccountNumber, StockSymbol, Fee, DateProcessed,PricePerShare)
 	VALUES(o_tid, t_eid, t_ssn, t_accNum, t_ss, t_fee, t_dp,t_pps);		
 	call queryNumShareAva(t_ss);
 	call queryOrderShares(o_tid);
-	call updateStockTableNumShare(t_ss, @numShareAva, t_dp, t_t);
+	IF m_ot = 'buy' THEN
+		SELECT @numShareAva - @oShare INTO newShareAva;
+	ELSE
+		SELECT @numShareAva + @oShare INTO newShareAva;
+	END IF;
+	call updateStockTableNumShare(t_ss, newShareAva, t_dp, t_t);
 END ^_^
 
 
@@ -303,7 +309,7 @@ BEGIN
 	INSERT INTO CAPITABAY.Market(OrderID, OrderType)
   	VALUES(@o_id, m_ot);
   	call CalcFee(@price, nos);
-  	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price);
+  	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
 End ^_^
 
 CREATE PROCEDURE addMarketOnClose(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
@@ -315,7 +321,7 @@ BEGIN
 	INSERT INTO CAPITABAY.MarketOnClose(OrderID,OrderType)
   	VALUES(@o_id,m_ot);
   	call CalcFee(@price, nos);
-  	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price);
+  	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
 End ^_^
 
 CREATE PROCEDURE addTrailingStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
