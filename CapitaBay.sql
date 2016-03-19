@@ -640,7 +640,14 @@ END ^_^
 /******************************************************************************  
 Customer QUERIES
  ******************************************************************************/
-
+CREATE PROCEDURE getStockSuggestionList(IN c_ssn INTEGER)
+BEGIN
+	call queryCustomerStocks(c_ssn);
+	call queryStockType(@oSS);
+	SELECT s.StockSymbol
+	FROM StockTable s
+	WHERE s.StockType = @st_type;
+END ^_^
 
 
 CREATE PROCEDURE recentOrderInfo(IN e_ssn INTEGER)
