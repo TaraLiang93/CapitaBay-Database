@@ -115,10 +115,10 @@ Order: information relating to the buying and selling of a number of shares of a
   ******************************************************************************/
 CREATE TABLE Orders (
 SocialSecurityNumber INTEGER,
-NumberOfShares	 INTEGER CHECK(NumberOfShares > 0),
+NumberOfShares	 INTEGER,
 OrderTime 			TIME,
 OrderID			INTEGER AUTO_INCREMENT,
-EmployeeSSN		INTEGER		,
+EmployeeSSN		INTEGER,
 AccountNumber	INTEGER,
 StockSymbol		VARCHAR(10)		NOT NULL,
 OrderDate		DATE	NOT NULL,
@@ -136,7 +136,9 @@ FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
 -- FOREIGN KEY(OrderDate) REFERENCES StockHistory(StockDate)
 -- 	ON DELETE NO ACTION
 -- 	ON UPDATE CASCADE
-);	
+);
+
+
 
 /*******************************************************************************  
 Market: information market order 
@@ -216,7 +218,20 @@ FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol) ON DELETE NO ACTION 
 
 
 DELIMITER ^_^
-
+/******************************************************************************  
+TRIGGERS
+ ******************************************************************************/
+CREATE TRIGGER checkShareNumber BEFORE INSERT ON Orders
+FOR EACH ROW
+BEGIN
+	IF NEW.NumberOfShares < 0 THEN
+		SET NEW.NumberOfShares = 0;
+	END IF;
+	call queryNumShareAva(NEW.StockSymbol);
+	IF NEW.NumberOfShares > @numShareAva THEN
+		SET NEW.NumberOfShares = 0;
+	END IF;
+END ^_^
 
 /******************************************************************************  
 INSERT QUERIES
@@ -305,7 +320,7 @@ CREATE PROCEDURE addMarket(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME,
 BEGIN
   	call queryCurrentPricePerShare(ss);
 	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price);
-	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
+	call queryOrderId(ssn, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.Market(OrderID, OrderType)
   	VALUES(@o_id, m_ot);
   	call CalcFee(@price, nos);
@@ -317,7 +332,7 @@ CREATE PROCEDURE addMarketOnClose(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME
 BEGIN
   	call queryCurrentPricePerShare(ss);
 	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price);
-	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
+	call queryOrderId(ssn, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.MarketOnClose(OrderID,OrderType)
   	VALUES(@o_id,m_ot);
   	call CalcFee(@price, nos);
@@ -328,7 +343,7 @@ CREATE PROCEDURE addTrailingStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME,
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32),IN  m_percent FLOAT)
 BEGIN
 	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL);
-	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
+	call queryOrderId(ssn, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.TrailingStop(OrderID,OrderType,Percentage)
   	VALUES(@o_id,m_ot,m_percent);
 End ^_^
@@ -346,12 +361,12 @@ End ^_^
 Supplment QUERIES for inserting
  *****************************************************************************/
 
-CREATE PROCEDURE queryOrderId(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
+CREATE PROCEDURE queryOrderId(IN ssn INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE)
 BEGIN 
 	SELECT o.OrderID INTO @o_id FROM Orders o WHERE (o.SocialSecurityNumber = ssn AND 
-		(o.NumberOfShares = nos AND (o.OrderTime = o_time AND (o.EmployeeSSN = e_ssn AND
-		(o.AccountNumber = an AND (o.StockSymbol = ss))))));
+		(o.OrderTime = o_time AND (o.EmployeeSSN = e_ssn AND
+		(o.AccountNumber = an AND (o.StockSymbol = ss)))));
 END ^_^
 
 CREATE PROCEDURE CalcFee(IN price FLOAT, IN numShare INTEGER)
