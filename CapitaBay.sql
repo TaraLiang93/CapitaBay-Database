@@ -231,7 +231,11 @@ CREATE PROCEDURE addTransaction(IN o_tid INTEGER, IN t_eid INTEGER, IN t_ssn INT
 	IN t_ss VARCHAR(10), IN t_fee FLOAT, IN t_dp TIME, IN t_pps FLOAT)
 BEGIN 
 	INSERT INTO CAPITABAY.Transaction(TransID, EmployeeSSN, SocialSecurityNumber, AccountNumber, StockSymbol, Fee, DateProcessed,PricePerShare)
-	VALUES(o_tid, t_eid, t_ssn, t_accNum, t_ss, t_fee, t_dp,t_pps);
+	VALUES(o_tid, t_eid, t_ssn, t_accNum, t_ss, t_fee, t_dp,t_pps);		
+	-- call queryNumShareAva(t_ss);
+	-- call queryOrderShares(o_tid);
+	-- call queryOrderDate(o_tid);
+	-- call updateStockTableNumShare(t_ss, @numShareAva, @oDate, t_dp);
 END ^_^
 
 
@@ -366,10 +370,32 @@ END ^_^
 
 CREATE PROCEDURE queryNumShareAva(IN stockSym VARCHAR(10))
 BEGIN 
-	SELECT i.numShare INTO @numShareAva
+	SELECT i.NumberOfSharesAvaliable INTO @numShareAva
 	FROM StockTable i
 	Where i.StockSymbol = stockSym;
 END ^_^
+
+CREATE PROCEDURE queryOrderShares(IN o_id INTEGER)
+BEGIN 
+	SELECT o.NumberOfShares INTO @oShare
+	FROM Orders o
+	Where o.OrderID = o_id;
+END ^_^
+
+CREATE PROCEDURE queryOrderDate(IN o_id INTEGER)
+BEGIN 
+	SELECT o.Orderdate INTO @oDate
+	FROM Orders o
+	Where o.OrderID = o_id;
+END ^_^
+
+CREATE PROCEDURE queryOrderTime(IN o_id INTEGER)
+BEGIN 
+	SELECT o.OrderTime INTO @oTime
+	FROM Orders o
+	Where o.OrderID = o_id;
+END ^_^
+
 
 /******************************************************************************  
 UPDATE QUERIES
