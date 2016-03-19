@@ -417,6 +417,19 @@ BEGIN
 	Where o.OrderID = o_id;
 END ^_^
 
+CREATE PROCEDURE queryStockType(IN stockSym VARCHAR(10))
+BEGIN	
+	SELECT DISTINCT s.StockType INTO @st_type
+	FROM StockTable s
+	WHERE stockSym = s.StockSymbol;
+END ^_^
+
+CREATE PROCEDURE queryCustomerStocks(IN c_ssn INTEGER)
+BEGIN 
+	SELECT o.StockSymbol INTO @oSS
+	FROM Orders o
+	Where o.SocialSecurityNumber = c_ssn;
+END ^_^
 
 /******************************************************************************  
 UPDATE QUERIES
@@ -604,7 +617,24 @@ BEGIN
 	
 END ^_^
 
+CREATE PROCEDURE makeStockSuggestionList(IN e_ssn INTEGER, IN c_ssn INTEGER)
+BEGIN
+	DECLARE currentEmployeePosition VARCHAR(12);
 
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'CustomerRep' THEN
+		call queryCustomerStocks(c_ssn);
+		call queryStockType(@oSS);
+		SELECT s.StockSymbol
+		FROM StockTable s
+		WHERE s.StockType = @st_type;
+	END IF;
+	
+	
+END ^_^
 
 
 /******************************************************************************  
