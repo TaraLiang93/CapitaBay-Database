@@ -87,12 +87,12 @@ CREATE TABLE StockTable (
 	StockType		VARCHAR(32)	 NOT NULL,
 	StockName		VARCHAR(32)	NOT NULL,
 	SharePrice			FLOAT,
-	Stockdate				DATE,
-	Stocktime				TIME,
+	StockDate				DATE,
+	StockTime				TIME,
 	NumberOfSharesAvaliable	INTEGER,
 	PRIMARY KEY(StockSymbol),
-	UNIQUE KEY(Stockdate),
-	UNIQUE KEY(Stocktime)
+	UNIQUE KEY(StockDate),
+	UNIQUE KEY(StockTime)
 );
 
 /*********************************************************************************
@@ -101,17 +101,11 @@ Individual Stock: represents a stock price and share number at a certain period 
 CREATE TABLE StockHistory (
 	SharePrice			FLOAT,
 	StockSymbol			VARCHAR(10),
-	Stockdate				DATE,
-	Stocktime				TIME,
+	StockDate				DATE,
+	StockTime				TIME,
 	NumberOfSharesAvaliable	INTEGER,
-	PRIMARY KEY(StockSymbol,Stockdate,Stocktime),
+	PRIMARY KEY(StockSymbol,StockDate,StockTime),
 	FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
-		ON DELETE NO ACTION
-		ON UPDATE CASCADE,
-	FOREIGN KEY(Stockdate) REFERENCES StockTable(Stockdate)
-		ON DELETE NO ACTION 
-		ON UPDATE CASCADE,
-	FOREIGN KEY(Stocktime) REFERENCES StockTable(Stocktime)
 		ON DELETE NO ACTION
 		ON UPDATE CASCADE
 );
@@ -127,7 +121,7 @@ OrderID			INTEGER AUTO_INCREMENT,
 EmployeeSSN		INTEGER		,
 AccountNumber	INTEGER,
 StockSymbol		VARCHAR(10)		NOT NULL,
-Orderdate		DATE	NOT NULL,
+OrderDate		DATE	NOT NULL,
 SharePrice			FLOAT,
 PRIMARY KEY(OrderID),
 FOREIGN KEY(SocialSecurityNumber,AccountNumber) REFERENCES StockAccount(SocialSecurityNumber,AccountNumber)
@@ -139,7 +133,7 @@ FOREIGN KEY(EmployeeSSN) REFERENCES Employee(SocialSecurityNumber)
 FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
 	ON DELETE NO ACTION 
 	ON UPDATE CASCADE
--- FOREIGN KEY(Orderdate) REFERENCES StockHistory(Stockdate)
+-- FOREIGN KEY(OrderDate) REFERENCES StockHistory(StockDate)
 -- 	ON DELETE NO ACTION
 -- 	ON UPDATE CASCADE
 );	
@@ -206,7 +200,7 @@ SocialSecurityNumber INTEGER,
 AccountNumber INTEGER,
 StockSymbol		VARCHAR(10),
 Fee			FLOAT NOT NULL,
-DateProcessed 	TIME,
+DateProcessed 	DATE,
 PricePerShare	FLOAT CHECK(PricePerShare>=0),
 PRIMARY KEY(TransID),
 FOREIGN KEY(TransID) REFERENCES Orders(OrderID) ON DELETE NO ACTION ON UPDATE CASCADE,
@@ -228,14 +222,13 @@ DELIMITER ^_^
 INSERT QUERIES
  ******************************************************************************/
 CREATE PROCEDURE addTransaction(IN o_tid INTEGER, IN t_eid INTEGER, IN t_ssn INTEGER, IN t_accNum INTEGER,
-	IN t_ss VARCHAR(10), IN t_fee FLOAT, IN t_dp TIME, IN t_pps FLOAT)
+	IN t_ss VARCHAR(10), IN t_fee FLOAT, IN t_dp DATE, IN t_t TIME, IN t_pps FLOAT)
 BEGIN 
 	INSERT INTO CAPITABAY.Transaction(TransID, EmployeeSSN, SocialSecurityNumber, AccountNumber, StockSymbol, Fee, DateProcessed,PricePerShare)
 	VALUES(o_tid, t_eid, t_ssn, t_accNum, t_ss, t_fee, t_dp,t_pps);		
-	-- call queryNumShareAva(t_ss);
-	-- call queryOrderShares(o_tid);
-	-- call queryOrderDate(o_tid);
-	-- call updateStockTableNumShare(t_ss, @numShareAva, @oDate, t_dp);
+	call queryNumShareAva(t_ss);
+	call queryOrderShares(o_tid);
+	call updateStockTableNumShare(t_ss, @numShareAva, t_dp, t_t);
 END ^_^
 
 
@@ -278,7 +271,7 @@ CREATE PROCEDURE addStockTable(IN st_ss VARCHAR(10),IN st_st VARCHAR(32),IN st_s
 	IN price FLOAT, IN s_date DATE, IN s_time TIME, IN NumberOfShares INTEGER)
 BEGIN
 	INSERT INTO CAPITABAY.StockTable(StockSymbol,StockType,StockName, SharePrice,
-		 Stockdate, Stocktime, NumberOfSharesAvaliable)
+		 StockDate, StockTime, NumberOfSharesAvaliable)
   	VALUES(st_ss,st_st,st_sn, price, s_date, s_time, NumberOfShares);
 	call addStockHistory(price, st_ss, s_date, s_time, NumberOfShares);
 End ^_^
@@ -286,7 +279,7 @@ End ^_^
 
 CREATE PROCEDURE addStockHistory(IN is_sp FLOAT,IN is_ss VARCHAR(10),IN is_dat DATE, IN is_time TIME,IN is_nosa INTEGER)
 BEGIN
-	INSERT INTO CAPITABAY.StockHistory(SharePrice,StockSymbol,Stockdate, Stocktime, NumberOfSharesAvaliable)
+	INSERT INTO CAPITABAY.StockHistory(SharePrice,StockSymbol,StockDate, StockTime, NumberOfSharesAvaliable)
   	VALUES(is_sp,is_ss,is_dat, is_time,is_nosa);
 End ^_^
 
@@ -295,7 +288,7 @@ CREATE PROCEDURE addOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME,
 BEGIN 
 
 	INSERT INTO CAPITABAY.Orders(SocialSecurityNumber, NumberOfShares, 
-		OrderTime, EmployeeSSN, AccountNumber, StockSymbol, Orderdate, SharePrice)
+		OrderTime, EmployeeSSN, AccountNumber, StockSymbol, OrderDate, SharePrice)
 	VALUES(ssn, nos, o_time, e_ssn, an, ss, dat, price);
 END ^_^
 
@@ -304,25 +297,25 @@ END ^_^
 CREATE PROCEDURE addMarket(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32) )
 BEGIN
-  	call queryPricePerShare(o_time, dat);
+  	call queryCurrentPricePerShare(ss);
 	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price);
 	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.Market(OrderID, OrderType)
   	VALUES(@o_id, m_ot);
   	call CalcFee(@price, nos);
-  	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, @price);
+  	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price);
 End ^_^
 
 CREATE PROCEDURE addMarketOnClose(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32))
 BEGIN
-  	call queryPricePerShare(o_time, dat);
+  	call queryCurrentPricePerShare(ss);
 	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price);
 	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.MarketOnClose(OrderID,OrderType)
   	VALUES(@o_id,m_ot);
   	call CalcFee(@price, nos);
-  	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, @price);
+  	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price);
 End ^_^
 
 CREATE PROCEDURE addTrailingStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
@@ -364,8 +357,15 @@ CREATE PROCEDURE queryPricePerShare(IN o_time TIME, IN dat DATE)
 BEGIN 
 	SELECT i.SharePrice INTO @price
 	FROM StockHistory i 
-	Where i.Stockdate < dat AND i.Stocktime < o_time 
+	Where i.StockDate < dat AND i.StockTime < o_time 
 	ORDER BY i.StockDate DESC LIMIT 1;
+END ^_^
+
+CREATE PROCEDURE queryCurrentPricePerShare(IN o_ss VARCHAR(10))
+BEGIN 
+	SELECT i.SharePrice INTO @price
+	FROM StockTable i 
+	Where i.StockSymbol = o_ss; 
 END ^_^
 
 CREATE PROCEDURE queryNumShareAva(IN stockSym VARCHAR(10))
@@ -384,7 +384,7 @@ END ^_^
 
 CREATE PROCEDURE queryOrderDate(IN o_id INTEGER)
 BEGIN 
-	SELECT o.Orderdate INTO @oDate
+	SELECT o.OrderDate INTO @oDate
 	FROM Orders o
 	Where o.OrderID = o_id;
 END ^_^
@@ -411,7 +411,7 @@ CREATE PROCEDURE updateStockTablePrice(IN stockSym VARCHAR(10), IN price FLOAT, 
 	IN s_time TIME)
 BEGIN
 	UPDATE StockTable
-	SET SharePrice = price, Stockdate = s_date, Stocktime = s_time
+	SET SharePrice = price, StockDate = s_date, StockTime = s_time
 	WHERE StockSymbol = stockSym;
 	call queryNumShareAva(stockSym);
 	call addStockHistory(price, stockSym, s_date, s_time, @numShareAva);
@@ -421,9 +421,9 @@ CREATE PROCEDURE updateStockTableNumShare(IN stockSym VARCHAR(10), IN shareAvali
 	IN s_date DATE, IN s_time TIME)
 BEGIN
 	UPDATE StockTable
-	SET NumberOfSharesAvaliable = shareAvaliable, Stockdate = s_date, Stocktime = s_time
+	SET NumberOfSharesAvaliable = shareAvaliable, StockDate = s_date, StockTime = s_time
 	WHERE StockSymbol = stockSym;
-	call queryPricePerShare(s_time, s_date);
+	call queryCurrentPricePerShare(stockSym);
 	call addStockHistory(@price, stockSym, s_date, s_time, shareAvaliable);
 END^_^
 
@@ -530,7 +530,7 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		SELECT DISTINCT S.StockSymbol, S.StockType,S.StockName, I.SharePrice, I.Stockdate,I.NumberOfSharesAvaliable
+		SELECT DISTINCT S.StockSymbol, S.StockType,S.StockName, I.SharePrice, I.StockDate,I.NumberOfSharesAvaliable
 		FROM StockTable S, StockHistory I
 		WHERE S.StockSymbol = I.StockSymbol;
 	END IF;
@@ -607,7 +607,7 @@ BEGIN
 		SELECT *
 		FROM Orders O 
 		WHERE O.SocialSecurityNumber = e_ssn
-		ORDER BY OrderTime ASC,Orderdate DESC
+		ORDER BY OrderTime ASC,OrderDate DESC
 		LIMIT 10;
 
 	END IF;
