@@ -603,11 +603,29 @@ BEGIN
 	IF currentEmployeePosition = 'Manager' THEN
 		SELECT O.StockSymbol,SUM(O.NumberOfShares*O.SharePrice)
 		FROM Orders O 
-		WHERE StockSymbol = stockSym;
+		WHERE O.StockSymbol = stockSym;
 	END IF;
 
 END ^_^
 
+CREATE PROCEDURE listRevenueByStockType(IN e_ssn INTEGER,IN stockty VARCHAR(10))
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		SELECT DISTINCT S.StockType,SUM(O.NumberOfShares*O.SharePrice)
+		FROM Orders O
+		INNER JOIN StockTable S 
+		ON O.StockSymbol = S.StockSymbol 
+		WHERE S.StockType = stockty;
+	END IF;
+
+END ^_^
 
 
 
