@@ -608,7 +608,7 @@ BEGIN
 
 END ^_^
 
-CREATE PROCEDURE listRevenueByStockType(IN e_ssn INTEGER,IN stockty VARCHAR(10))
+CREATE PROCEDURE listRevenueByStockType(IN e_ssn INTEGER,IN stockty VARCHAR(32))
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
 	DECLARE currentEmployeePosition VARCHAR(12);
@@ -749,7 +749,7 @@ BEGIN
 	WHERE s.StockType = @st_type;
 END ^_^
 
-CREATE PROCEDURE recentOrderInfo(IN e_ssn INTEGER)
+CREATE PROCEDURE OrderHistory(IN e_ssn INTEGER)
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE )
 
@@ -768,6 +768,30 @@ BEGIN
 		LIMIT 10;
 
 	END IF;
+
+END ^_^
+
+CREATE PROCEDURE mostRecentStockAvailByType(IN e_ssn INTEGER,IN stockTy VARCHAR(32))
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE )
+
+	-- DECLARE customer	 INTEGER;
+
+	-- SELECT COUNT(*) INTO customer
+	-- FROM Customer C
+	-- WHERE C.SocialSecurityNumber = e_ssn;
+
+	-- If there is atleast one customer 
+	-- IF customer > 0 THEN
+		SELECT S.StockSymbol,S.StockName,S.StockType,S.NumberOfSharesAvaliable,O.SocialSecurityNumber,O.AccountNumber,O.NumberOfShares,O.SharePrice,O.OrderType
+		FROM Orders O
+		INNER JOIN StockTable S 
+		ON O.StockSymbol = S.StockSymbol
+		WHERE O.SocialSecurityNumber = e_ssn AND S.StockType = stockty
+		ORDER BY O.OrderTime DESC,O.OrderDate DESC
+		LIMIT 1;
+
+	-- END IF;
 
 END ^_^
 
@@ -795,6 +819,8 @@ BEGIN
 	WHERE a.StockSymbol = b.StockSymbol
 	GROUP BY a.StockSymbol;
 END ^_^
+
+
 
 DELIMITER ;
 
