@@ -533,6 +533,25 @@ BEGIN
 
 END ^_^
 
+CREATE PROCEDURE listRevenueByStock(IN e_ssn INTEGER,IN stockSym VARCHAR(10))
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		SELECT O.StockSymbol,SUM(O.NumberOfShares*O.SharePrice)
+		FROM Orders O 
+		WHERE StockSymbol = stockSym;
+	END IF;
+
+END ^_^
+
+
+
 
 -- recommendation for employees
 -- select StockTable.StockType, COUNT(StockTable.StockType) AS NumberOfType FROM StockTable LEFT JOIN Transaction ON StockTable.StockSymbol = Transaction.StockSymbol WHERE Transaction.SocialSecurityNumber = 222222222 GROUP BY StockType ;
