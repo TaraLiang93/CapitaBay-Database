@@ -488,8 +488,11 @@ BEGIN
 	WHERE StockSymbol = stockSym;
 END ^_^
 
-
-
+CREATE PROCEDURE deleteCustomer(IN c_ssn INTEGER)
+BEGIN
+	DELETE FROM Customer
+	WHERE SocialSecurityNumber = c_ssn;
+End ^_^
 
 
 /******************************************************************************  
@@ -709,7 +712,8 @@ BEGIN
 	FROM Employee E
 	WHERE E.SocialSecurityNumber = e_ssn;
 
-	IF currentEmployeePosition = 'CustomerRep' THEN
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
 		SELECT C.Email  
 		FROM Customer C;
 	END IF;
@@ -725,7 +729,8 @@ BEGIN
 	FROM Employee E
 	WHERE E.SocialSecurityNumber = e_ssn;
 
-	IF currentEmployeePosition = 'CustomerRep' THEN
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
 		call queryCustomerStocks(c_ssn);
 		call queryStockType(@oSS);
 		SELECT s.StockSymbol
@@ -745,7 +750,8 @@ BEGIN
 	FROM Employee E
 	WHERE E.SocialSecurityNumber = e_ssn;
 
-	IF currentEmployeePosition = 'CustomerRep' THEN
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
 		IF m_ot = 'Market' THEN
 			call addMarket(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot);
 		ELSEIF m_ot = 'MarketOnClose' THEN
@@ -756,8 +762,28 @@ BEGIN
 			call addHiddenStop(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot, m_percent);
 		END IF;
 	END IF;
-	
-	
+END ^_^
+
+CREATE PROCEDURE manageCustomers(IN reqeust VARCHAR(12),IN e_ssn INTEGER,IN c_ssn INTEGER,
+	IN c_rate FLOAT,IN c_ccn CHAR(20),IN c_email VARCHAR(50))
+BEGIN
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
+		IF reqeust = 'INSERT' THEN
+			call addCustomer(c_ssn, c_rate, c_ccn, c_email);
+		ELSEIF reqeust = 'UPDATE' THEN
+			call editCustomer(c_ssn, c_rate, c_ccn, c_email);
+		ELSEIF reqeust = 'DELETE' THEN
+			call deleteCustomer(c_ssn);
+		END IF;
+	END IF;
+
 END ^_^
 
 
