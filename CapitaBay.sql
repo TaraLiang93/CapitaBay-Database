@@ -488,8 +488,11 @@ BEGIN
 	WHERE StockSymbol = stockSym;
 END ^_^
 
-
-
+CREATE PROCEDURE deleteCustomer(IN c_ssn INTEGER)
+BEGIN
+	DELETE FROM Customer
+	WHERE SocialSecurityNumber = c_ssn;
+End ^_^
 
 
 /******************************************************************************  
@@ -709,7 +712,8 @@ BEGIN
 	FROM Employee E
 	WHERE E.SocialSecurityNumber = e_ssn;
 
-	IF currentEmployeePosition = 'CustomerRep' THEN
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
 		SELECT C.Email  
 		FROM Customer C;
 	END IF;
@@ -725,7 +729,8 @@ BEGIN
 	FROM Employee E
 	WHERE E.SocialSecurityNumber = e_ssn;
 
-	IF currentEmployeePosition = 'CustomerRep' THEN
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
 		call queryCustomerStocks(c_ssn);
 		call queryStockType(@oSS);
 		SELECT s.StockSymbol
@@ -735,6 +740,53 @@ BEGIN
 	
 	
 END ^_^
+
+CREATE PROCEDURE recordOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32))
+BEGIN
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
+		IF m_ot = 'Market' THEN
+			call addMarket(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot);
+		ELSEIF m_ot = 'MarketOnClose' THEN
+			call addMarketOnClose(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot);
+		ELSEIF m_ot = 'TrailingStop' THEN
+			call addTrailingStop(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot, m_percent);
+		ELSEIF m_ot = 'HiddenStop' THEN	
+			call addHiddenStop(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot, m_percent);
+		END IF;
+	END IF;
+END ^_^
+
+CREATE PROCEDURE manageCustomers(IN reqeust VARCHAR(12),IN e_ssn INTEGER,IN c_ssn INTEGER,
+	IN c_rate FLOAT,IN c_ccn CHAR(20),IN c_email VARCHAR(50))
+BEGIN
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
+		IF reqeust = 'INSERT' THEN
+			call addCustomer(c_ssn, c_rate, c_ccn, c_email);
+		ELSEIF reqeust = 'UPDATE' THEN
+			call editCustomer(c_ssn, c_rate, c_ccn, c_email);
+		ELSEIF reqeust = 'DELETE' THEN
+			call deleteCustomer(c_ssn);
+		END IF;
+	END IF;
+
+END ^_^
+
+
 
 
 /******************************************************************************  
@@ -821,6 +873,12 @@ BEGIN
 END ^_^
 
 
+CREATE PROCEDURE getStocksByKeyword(IN keyword VARCHAR(50))
+BEGIN
+	SELECT s.StockSymbol
+	FROM StockTable s
+	WHERE s.StockName LIKE CONCAT("%", keyword, "%");
+END ^_^
 
 DELIMITER ;
 
