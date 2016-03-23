@@ -603,7 +603,7 @@ BEGIN
 	IF currentEmployeePosition = 'Manager' THEN
 		SELECT O.StockSymbol,SUM(O.NumberOfShares*O.SharePrice)
 		FROM Orders O 
-		WHERE O.StockSymbol = stockSym;
+		WHERE O.StockSymbol = stockSym AND O.OrderType = 'buy';
 	END IF;
 
 END ^_^
@@ -618,11 +618,11 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		SELECT DISTINCT S.StockType,SUM(O.NumberOfShares*O.SharePrice)
+		SELECT DISTINCT S.StockType,SUM(O.NumberOfShares*O.SharePrice) AS Revenue
 		FROM Orders O
 		INNER JOIN StockTable S 
 		ON O.StockSymbol = S.StockSymbol 
-		WHERE S.StockType = stockty;
+		WHERE S.StockType = stockty AND O.OrderType = 'buy';
 	END IF;
 
 END ^_^
@@ -637,11 +637,52 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		SELECT P.FirstName,P.LastName,O.SocialSecurityNumber,SUM(O.NumberOfShares*O.SharePrice)
-		FROM Orders O
+		SELECT P.FirstName,P.LastName,O.SocialSecurityNumber,SUM(O.NumberOfShares*O.SharePrice) AS Revenue		FROM Orders O
 		INNER JOIN Person P
 		ON P.SocialSecurityNumber = O.SocialSecurityNumber
-		WHERE O.SocialSecurityNumber = c_ssn;
+		WHERE O.SocialSecurityNumber = c_ssn AND O.OrderType = 'sell';
+	END IF;
+
+END ^_^
+
+CREATE PROCEDURE richestCustomer(IN e_ssn INTEGER)
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		SELECT O.SocialSecurityNumber,P.FirstName,P.LastName,SUM(O.NumberOfShares*O.SharePrice) AS Revenue
+		FROM Orders O 
+		INNER JOIN Person P
+		ON P.SocialSecurityNumber = O.SocialSecurityNumber
+		WHERE O.OrderType = 'sell'
+		GROUP BY O.SocialSecurityNumber
+		ORDER BY Revenue DESC
+		LIMIT 1;
+	END IF;
+
+END ^_^
+
+CREATE PROCEDURE mostPopularStocks(IN e_ssn INTEGER)
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		SELECT O.StockSymbol,S.StockName, S.NumberOfSharesAvaliable,S.SharePrice
+		FROM Orders O
+		INNER JOIN StockTable S
+		ON S.StockSymbol = O.StockSymbol
+		GROUP BY O.StockSymbol
+		HAVING COUNT(*) > 2;
 	END IF;
 
 END ^_^
