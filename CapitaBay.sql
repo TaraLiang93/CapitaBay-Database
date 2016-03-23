@@ -872,6 +872,39 @@ BEGIN
 	GROUP BY a.StockSymbol;
 END ^_^
 
+CREATE PROCEDURE getCurrentStockHoldings1(IN c_ssn INTEGER)
+BEGIN
+
+	DROP TABLE IF EXISTS bought;
+	CREATE TEMPORARY TABLE bought(
+		StockSymbol VARCHAR(10),
+		SUM INTEGER
+		);
+
+	DROP TABLE IF EXISTS sold;
+	CREATE TEMPORARY TABLE sold (
+		StockSymbol VARCHAR(10),
+		SUM INTEGER
+		);
+
+	INSERT INTO bought
+		SELECT O.StockSymbol, SUM(O.NumberOfShares)
+		FROM Orders O, Transaction T
+		WHERE T.TransID = O.OrderID AND O.SocialSecurityNumber = c_ssn AND O.OrderType = 'buy'
+		GROUP BY O.StockSymbol;
+
+	INSERT INTO sold
+		SELECT O.StockSymbol, SUM(O.NumberOfShares)
+		FROM Orders O, Transaction T
+		WHERE T.TransID = O.OrderID AND O.SocialSecurityNumber = c_ssn AND O.OrderType = 'sell'
+		GROUP BY O.StockSymbol;
+
+	SELECT DISTINCT O.StockSymbol, bought.SUM - sold.SUM AS TotalShares
+	FROM Orders O,bought,sold
+	WHERE bought.StockSymbol = sold.StockSymbol AND O.StockSymbol = bought.StockSymbol;
+
+END ^_^
+
 
 CREATE PROCEDURE getStocksByKeyword(IN keyword VARCHAR(50))
 BEGIN
