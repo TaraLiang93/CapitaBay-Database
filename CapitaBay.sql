@@ -728,7 +728,7 @@ END ^_^
 
 CREATE PROCEDURE getCurrentStockHoldings(IN c_ssn INTEGER)
 BEGIN
-	SELECT a.StockSymbol, SUM(a.NumberOfShares) - SUM(b.NumberOfShares)
+	SELECT a.StockSymbol, a.NumberOfShares - b.NumberOfShares AS TotalShares
 	FROM	(SELECT j.StockSymbol, j.NumberOfShares
 		FROM (SELECT o.OrderType, o.NumberOfShares, o.SocialSecurityNumber, o.StockSymbol
 			FROM Orders o
@@ -742,7 +742,8 @@ BEGIN
 			INNER JOIN Transaction t
 			ON o.OrderID = t.TransID) j
 		WHERE j.SocialSecurityNumber = c_ssn 
-		AND j.OrderType = 'sell') b ;
+		AND j.OrderType = 'sell') b
+	WHERE a.StockSymbol = b.StockSymbol;
 END ^_^
 
 DELIMITER ;
