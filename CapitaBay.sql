@@ -667,6 +667,26 @@ BEGIN
 
 END ^_^
 
+CREATE PROCEDURE mostPopularStocks(IN e_ssn INTEGER)
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		SELECT O.StockSymbol,S.StockName, S.NumberOfSharesAvaliable,S.SharePrice
+		FROM Orders O
+		INNER JOIN StockTable S
+		ON S.StockSymbol = O.StockSymbol
+		GROUP BY O.StockSymbol
+		HAVING COUNT(*) > 2;
+	END IF;
+
+END ^_^
+
 
 
 
