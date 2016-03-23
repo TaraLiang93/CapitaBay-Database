@@ -123,6 +123,7 @@ AccountNumber	INTEGER,
 StockSymbol		VARCHAR(10)		NOT NULL,
 OrderDate		DATE	NOT NULL,
 SharePrice			FLOAT,
+OrderType		VARCHAR(32),
 PRIMARY KEY(OrderID),
 FOREIGN KEY(SocialSecurityNumber,AccountNumber) REFERENCES StockAccount(SocialSecurityNumber,AccountNumber)
 	ON DELETE NO ACTION
@@ -136,60 +137,6 @@ FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
 -- FOREIGN KEY(OrderDate) REFERENCES StockHistory(StockDate)
 -- 	ON DELETE NO ACTION
 -- 	ON UPDATE CASCADE
-);
-
-
-
-/*******************************************************************************  
-Market: information market order 
-*******************************************************************************/
-CREATE TABLE Market (
-OrderID 		INTEGER,
-OrderType		VARCHAR(32),
-PRIMARY KEY(OrderID),
-FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
-ON DELETE NO ACTION
-ON UPDATE CASCADE
-	
-);
-
-/******************************************************************************  
-MarketOnClose: information Market on Close order 
-******************************************************************************/
-CREATE TABLE MarketOnClose (
-OrderID 		INTEGER,
-OrderType		VARCHAR(32),
-PRIMARY KEY(OrderID),
-FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
-ON DELETE NO ACTION
-ON UPDATE CASCADE
-	
-);
-/*******************************************************************************  
-TrailingStop: information Trailing Stop order
- *******************************************************************************/
-CREATE TABLE TrailingStop (
-OrderID 		INTEGER,
-OrderType		VARCHAR(32),
-Percentage		FLOAT,
-PRIMARY KEY(OrderID),
-FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
-ON DELETE NO ACTION
-ON UPDATE CASCADE
-	
-);
-/******************************************************************************  
-Hidden Stop: information hidden stop order
- ******************************************************************************/
-CREATE TABLE HiddenStop (
-OrderID 		INTEGER,
-PricePerShare		FLOAT,
-OrderType		VARCHAR(32),
-PRIMARY KEY(OrderID),
-FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
-ON DELETE NO ACTION
-ON UPDATE CASCADE
-	
 );
 
 /******************************************************************************
@@ -305,12 +252,12 @@ BEGIN
 End ^_^
 
 CREATE PROCEDURE addOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
-		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN price FLOAT)
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN price FLOAT, IN o_type VARCHAR(32))
 BEGIN 
 
 	INSERT INTO CAPITABAY.Orders(SocialSecurityNumber, NumberOfShares, 
-		OrderTime, EmployeeSSN, AccountNumber, StockSymbol, OrderDate, SharePrice)
-	VALUES(ssn, nos, o_time, e_ssn, an, ss, dat, price);
+		OrderTime, EmployeeSSN, AccountNumber, StockSymbol, OrderDate, SharePrice, OrderType)
+	VALUES(ssn, nos, o_time, e_ssn, an, ss, dat, price, o_type);
 END ^_^
 
 
@@ -319,10 +266,8 @@ CREATE PROCEDURE addMarket(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME,
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32) )
 BEGIN
   	call queryCurrentPricePerShare(ss);
-	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price);
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price, 'Market');
 	call queryOrderId(ssn, o_time, e_ssn, an, ss, dat);
-	INSERT INTO CAPITABAY.Market(OrderID, OrderType)
-  	VALUES(@o_id, m_ot);
   	call CalcFee(@price, nos);
   	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
 End ^_^
@@ -331,10 +276,8 @@ CREATE PROCEDURE addMarketOnClose(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32))
 BEGIN
   	call queryCurrentPricePerShare(ss);
-	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price);
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price, 'MarketOnClose');
 	call queryOrderId(ssn, o_time, e_ssn, an, ss, dat);
-	INSERT INTO CAPITABAY.MarketOnClose(OrderID,OrderType)
-  	VALUES(@o_id,m_ot);
   	call CalcFee(@price, nos);
   	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
 End ^_^
@@ -342,19 +285,15 @@ End ^_^
 CREATE PROCEDURE addTrailingStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32),IN  m_percent FLOAT)
 BEGIN
-	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL);
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL, 'TrailingStop');
 	call queryOrderId(ssn, o_time, e_ssn, an, ss, dat);
-	INSERT INTO CAPITABAY.TrailingStop(OrderID,OrderType,Percentage)
-  	VALUES(@o_id,m_ot,m_percent);
 End ^_^
 
 CREATE PROCEDURE addHiddenStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN  m_pps FLOAT,IN m_ot VARCHAR(32))
 BEGIN
-	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL);
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL, 'HiddenStop');
 	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
-	INSERT INTO CAPITABAY.HiddenStop(OrderID,PricePerShare,PricePerShare)
-  	VALUES(@o_id,m_pps,m_ot);
 End ^_^
 
 /*****************************************************************************  
