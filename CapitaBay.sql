@@ -91,8 +91,8 @@ CREATE TABLE StockTable (
 	StockTime				TIME,
 	NumberOfSharesAvaliable	INTEGER,
 	PRIMARY KEY(StockSymbol),
-	UNIQUE KEY(StockDate),
-	UNIQUE KEY(StockTime)
+	 KEY(StockDate),
+	 KEY(StockTime)
 );
 
 /*********************************************************************************
@@ -666,6 +666,25 @@ BEGIN
 
 	END IF;
 
+END ^_^
+
+CREATE PROCEDURE getCurrentStockHoldings(IN c_ssn INTEGER)
+BEGIN
+	SELECT a.StockSymbol, SUM(a.NumberOfShares) - SUM(b.NumberOfShares)
+	FROM	(SELECT j.StockSymbol, j.NumberOfShares
+		FROM (SELECT o.OrderType, o.NumberOfShares, o.SocialSecurityNumber, o.StockSymbol
+			FROM Orders o
+			INNER JOIN Transaction t
+			ON o.OrderID = t.TransID) j
+		WHERE j.SocialSecurityNumber = c_ssn 
+		AND j.OrderType = 'buy') a,
+		(SELECT j.StockSymbol, j.NumberOfShares
+		FROM (SELECT o.OrderType, o.NumberOfShares, o.SocialSecurityNumber, o.StockSymbol
+			FROM Orders o
+			INNER JOIN Transaction t
+			ON o.OrderID = t.TransID) j
+		WHERE j.SocialSecurityNumber = c_ssn 
+		AND j.OrderType = 'sell') b ;
 END ^_^
 
 DELIMITER ;
