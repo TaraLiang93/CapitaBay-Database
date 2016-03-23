@@ -627,6 +627,27 @@ BEGIN
 
 END ^_^
 
+CREATE PROCEDURE listRevenueCustomer(IN e_ssn INTEGER,IN c_ssn INTEGER)
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		SELECT P.FirstName,P.LastName,O.SocialSecurityNumber,SUM(O.NumberOfShares*O.SharePrice)
+		FROM Orders O
+		INNER JOIN Person P
+		ON P.SocialSecurityNumber = O.SocialSecurityNumber
+		WHERE O.SocialSecurityNumber = c_ssn;
+	END IF;
+
+END ^_^
+
+
+
 
 
 -- recommendation for employees
