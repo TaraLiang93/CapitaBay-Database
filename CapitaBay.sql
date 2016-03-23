@@ -139,6 +139,56 @@ FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
 -- 	ON UPDATE CASCADE
 );
 
+
+
+/*******************************************************************************  
+Market: information market order 
+*******************************************************************************/
+CREATE TABLE Market (
+OrderID 		INTEGER,
+PRIMARY KEY(OrderID),
+FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
+ON DELETE NO ACTION
+ON UPDATE CASCADE
+	
+);
+
+/******************************************************************************  
+MarketOnClose: information Market on Close order 
+******************************************************************************/
+CREATE TABLE MarketOnClose (
+OrderID 		INTEGER,
+PRIMARY KEY(OrderID),
+FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
+ON DELETE NO ACTION
+ON UPDATE CASCADE
+	
+);
+/*******************************************************************************  
+TrailingStop: information Trailing Stop order
+ *******************************************************************************/
+CREATE TABLE TrailingStop (
+OrderID 		INTEGER,
+Percentage		FLOAT,
+PRIMARY KEY(OrderID),
+FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
+ON DELETE NO ACTION
+ON UPDATE CASCADE
+	
+);
+/******************************************************************************  
+Hidden Stop: information hidden stop order
+ ******************************************************************************/
+CREATE TABLE HiddenStop (
+OrderID 		INTEGER,
+PricePerShare		FLOAT,
+PRIMARY KEY(OrderID),
+FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
+ON DELETE NO ACTION
+ON UPDATE CASCADE
+	
+);
+
 /******************************************************************************
 Transaction: information when a order is processed and carried out
 ******************************************************************************/
@@ -266,8 +316,10 @@ CREATE PROCEDURE addMarket(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME,
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32) )
 BEGIN
   	call queryCurrentPricePerShare(ss);
-	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price, 'Market');
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price, m_ot);
 	call queryOrderId(ssn, o_time, e_ssn, an, ss, dat);
+	INSERT INTO CAPITABAY.Market(OrderID)
+  	VALUES(@o_id);
   	call CalcFee(@price, nos);
   	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
 End ^_^
@@ -276,8 +328,10 @@ CREATE PROCEDURE addMarketOnClose(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32))
 BEGIN
   	call queryCurrentPricePerShare(ss);
-	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price, 'MarketOnClose');
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, @price, m_ot);
 	call queryOrderId(ssn, o_time, e_ssn, an, ss, dat);
+	INSERT INTO CAPITABAY.MarketOnClose(OrderID)
+  	VALUES(@o_id);
   	call CalcFee(@price, nos);
   	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
 End ^_^
@@ -285,15 +339,19 @@ End ^_^
 CREATE PROCEDURE addTrailingStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32),IN  m_percent FLOAT)
 BEGIN
-	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL, 'TrailingStop');
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL, m_ot);
 	call queryOrderId(ssn, o_time, e_ssn, an, ss, dat);
+	INSERT INTO CAPITABAY.TrailingStop(OrderID,Percentage)
+  	VALUES(@o_id,m_percent);
 End ^_^
 
 CREATE PROCEDURE addHiddenStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN  m_pps FLOAT,IN m_ot VARCHAR(32))
 BEGIN
-	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL, 'HiddenStop');
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL, m_ot);
 	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
+	INSERT INTO CAPITABAY.HiddenStop(OrderID,PricePerShare,PricePerShare)
+  	VALUES(@o_id,m_pps);
 End ^_^
 
 /*****************************************************************************  
@@ -606,7 +664,6 @@ BEGIN
 	FROM StockTable s
 	WHERE s.StockType = @st_type;
 END ^_^
-
 
 CREATE PROCEDURE recentOrderInfo(IN e_ssn INTEGER)
 BEGIN
