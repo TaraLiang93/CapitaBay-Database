@@ -796,6 +796,13 @@ BEGIN
 	GROUP BY a.StockSymbol;
 END ^_^
 
+CREATE PROCEDURE getStocksByKeyword(IN keyword VARCHAR(50))
+BEGIN
+	SELECT s.StockSymbol
+	FROM StockTable s
+	WHERE s.StockName LIKE CONCAT("%", keyword, "%");
+END ^_^
+
 DELIMITER ;
 
 -- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
