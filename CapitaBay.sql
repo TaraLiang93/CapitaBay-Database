@@ -849,42 +849,17 @@ END ^_^
 
 CREATE PROCEDURE getCurrentStockHoldings(IN c_ssn INTEGER)
 BEGIN
-	SELECT DISTINCT a.StockSymbol, SUM(a.NumberOfShares) , SUM(b.NumberOfShares) AS TotalShares	
-	FROM	(
-		SELECT j.StockSymbol, j.NumberOfShares
-		FROM (
-			SELECT o.OrderType, o.NumberOfShares, o.SocialSecurityNumber, o.StockSymbol
-			FROM Orders o
-			INNER JOIN Transaction t
-			ON o.OrderID = t.TransID) j
-		WHERE j.SocialSecurityNumber = c_ssn 
-		AND j.OrderType = 'buy') a,
-		(
-		SELECT j.StockSymbol, j.NumberOfShares
-		FROM (
-			SELECT o.OrderType, o.NumberOfShares, o.SocialSecurityNumber, o.StockSymbol
-			FROM Orders o
-			INNER JOIN Transaction t
-			ON o.OrderID = t.TransID) j
-		WHERE j.SocialSecurityNumber = c_ssn 
-		AND j.OrderType = 'sell') b
-	WHERE a.StockSymbol = b.StockSymbol
-	GROUP BY a.StockSymbol;
-END ^_^
-
-CREATE PROCEDURE getCurrentStockHoldings1(IN c_ssn INTEGER)
-BEGIN
 
 	DROP TABLE IF EXISTS bought;
 	CREATE TEMPORARY TABLE bought(
 		StockSymbol VARCHAR(10),
-		SUM INTEGER
+		S INTEGER
 		);
 
 	DROP TABLE IF EXISTS sold;
 	CREATE TEMPORARY TABLE sold (
 		StockSymbol VARCHAR(10),
-		SUM INTEGER
+		S INTEGER
 		);
 
 	INSERT INTO bought
@@ -899,9 +874,20 @@ BEGIN
 		WHERE T.TransID = O.OrderID AND O.SocialSecurityNumber = c_ssn AND O.OrderType = 'sell'
 		GROUP BY O.StockSymbol;
 
-	SELECT DISTINCT O.StockSymbol, bought.SUM - sold.SUM AS TotalShares
-	FROM Orders O,bought,sold
-	WHERE bought.StockSymbol = sold.StockSymbol AND O.StockSymbol = bought.StockSymbol;
+
+	-- IF ( EXISTS(SELECT 1 FROM bought))  THEN 
+		IF EXISTS (SELECT 1 FROM sold) THEN
+			SELECT DISTINCT O.StockSymbol, bought.S - sold.S AS TotalShares
+			FROM Orders O,bought
+			INNER JOIN sold
+			ON bought.StockSymbol = sold.StockSymbol 
+			WHERE O.StockSymbol = bought.StockSymbol;
+		ELSE 
+			SELECT DISTINCT O.StockSymbol, bought.S AS TotalShares
+			FROM Orders O
+			INNER JOIN bought 
+			ON bought.StockSymbol = O.StockSymbol;
+		END IF;
 
 END ^_^
 
