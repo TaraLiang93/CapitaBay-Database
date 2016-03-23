@@ -736,6 +736,32 @@ BEGIN
 	
 END ^_^
 
+CREATE PROCEDURE recordOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32))
+BEGIN
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'CustomerRep' THEN
+		IF m_ot = 'Market' THEN
+			call addMarket(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot);
+		ELSEIF m_ot = 'MarketOnClose' THEN
+			call addMarketOnClose(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot);
+		ELSEIF m_ot = 'TrailingStop' THEN
+			call addTrailingStop(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot, m_percent);
+		ELSEIF m_ot = 'HiddenStop' THEN	
+			call addHiddenStop(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot, m_percent);
+		END IF;
+	END IF;
+	
+	
+END ^_^
+
+
+
 
 /******************************************************************************  
 Customer QUERIES
