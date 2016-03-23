@@ -682,7 +682,7 @@ BEGIN
 		INNER JOIN StockTable S
 		ON S.StockSymbol = O.StockSymbol
 		GROUP BY O.StockSymbol
-		HAVING COUNT(*) > 2;
+		ORDER BY COUNT(*) DESC;
 	END IF;
 
 END ^_^
