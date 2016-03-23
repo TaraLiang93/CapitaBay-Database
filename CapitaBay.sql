@@ -880,6 +880,15 @@ BEGIN
 	WHERE s.StockName LIKE CONCAT("%", keyword, "%");
 END ^_^
 
+CREATE PROCEDURE getStockHistory(IN pastDate DATE, IN ss VARCHAR(10))
+BEGIN
+	SELECT s.SharePrice, s.StockDate
+	FROM StockHistory s
+	WHERE (s.StockDate <= CURDATE() 
+	AND s.StockDate >= pastDate)
+	AND s.StockSymbol = ss;
+END ^_^
+
 DELIMITER ;
 
 -- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
