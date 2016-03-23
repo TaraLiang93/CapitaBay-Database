@@ -913,6 +913,45 @@ BEGIN
 	WHERE s.StockName LIKE CONCAT("%", keyword, "%");
 END ^_^
 
+CREATE PROCEDURE getStockHistory(IN pastDate DATE, IN ss VARCHAR(10))
+BEGIN
+	SELECT s.SharePrice, s.StockDate
+	FROM StockHistory s
+	WHERE (s.StockDate <= CURDATE() 
+	AND s.StockDate >= pastDate)
+	AND s.StockSymbol = ss;
+END ^_^
+
+CREATE PROCEDURE getConditionalOrderHistory(IN o_id INTEGER)
+BEGIN	
+	DECLARE ss VARCHAR(10);
+	DECLARE tDate DATE;
+	
+	call queryOrderDate(o_id);
+	
+	SELECT o.StockSymbol INTO ss
+	FROM Orders o
+	WHERE o.OrderID = o_id;
+	
+	SELECT t.DateProcessed INTO tDate
+	FROM Transaction t
+	WHERE t.TransID = o_id;
+	
+	IF(tDate IS NULL) THEN 
+		SELECT s.SharePrice, s.StockDate
+		FROM StockHistory s
+		WHERE (s.StockDate <= CURDATE() 
+		AND s.StockDate >= @oDate)
+		AND s.StockSymbol = ss;
+	ELSE
+		SELECT s.SharePrice, s.StockDate
+		FROM StockHistory s
+		WHERE (s.StockDate <= tDate 
+		AND s.StockDate >= @oDate)
+		AND s.StockSymbol = ss;
+	END IF;
+END ^_^
+
 DELIMITER ;
 
 -- CREATE VIEW CapitaBay.ShowStockHistory(StockSymbol, SharePrice, StockName, StockType)
