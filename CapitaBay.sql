@@ -104,7 +104,7 @@ CREATE TABLE StockHistory (
 	StockDate				DATE,
 	StockTime				TIME,
 	NumberOfSharesAvaliable	INTEGER,
-	PRIMARY KEY(StockSymbol,StockDate,StockTime),
+	PRIMARY KEY(StockSymbol,StockDate,StockTime, NumberOfSharesAvaliable),
 	FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol)
 		ON DELETE NO ACTION
 		ON UPDATE CASCADE
@@ -170,11 +170,11 @@ TrailingStop: information Trailing Stop order
 CREATE TABLE TrailingStop (
 OrderID 		INTEGER,
 Percentage		FLOAT,
+PricePerShare 	FLOAT,
 PRIMARY KEY(OrderID),
 FOREIGN KEY(OrderID) REFERENCES Orders(OrderID)
 ON DELETE NO ACTION
 ON UPDATE CASCADE
-	
 );
 /******************************************************************************  
 Hidden Stop: information hidden stop order
@@ -229,6 +229,7 @@ BEGIN
 		SET NEW.NumberOfShares = 0;
 	END IF;
 END ^_^
+
 
 /******************************************************************************  
 INSERT QUERIES
@@ -337,26 +338,158 @@ BEGIN
 End ^_^
 
 CREATE PROCEDURE addTrailingStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
-		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32),IN  m_percent FLOAT)
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE,IN  m_percent FLOAT)
 BEGIN
-	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL, m_ot);
-	call queryOrderId(ssn, o_time, e_ssn, an, ss, dat);
-	INSERT INTO CAPITABAY.TrailingStop(OrderID,Percentage)
-  	VALUES(@o_id,m_percent);
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL, 'sell');
+  	call queryCurrentPricePerShare(ss);
+	call queryOrderId2(ssn, o_time, e_ssn, an, ss, dat, @price);
+	INSERT INTO CAPITABAY.TrailingStop(OrderID,Percentage, PricePerShare)
+  	VALUES(@o_id,m_percent,@price);
 End ^_^
 
 CREATE PROCEDURE addHiddenStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
-		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN  m_pps FLOAT,IN m_ot VARCHAR(32))
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN  m_pps FLOAT)
 BEGIN
-	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL, m_ot);
-	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
-	INSERT INTO CAPITABAY.HiddenStop(OrderID,PricePerShare,PricePerShare)
+	call addOrder(ssn, nos, o_time, e_ssn, an, ss, dat, NULL, 'sell');
+	call queryCurrentPricePerShare(ss);
+	call queryOrderId2(ssn, o_time, e_ssn, an, ss, dat, @price);
+	INSERT INTO CAPITABAY.HiddenStop(OrderID,PricePerShare)
   	VALUES(@o_id,m_pps);
 End ^_^
+	
+/*****************************************************************************  
+HiddenStop or Trailing stop Procedure
+ ****************************************************************************/
+-- CREATE PROCEDURE checkHSOrder(IN stockSym VARCHAR(10), IN SharePrice FLOAT)
+-- BEGIN
+-- 	DECLEAR i INT DEFAULT 0;
+-- 	DECLEAR n INT DEFAULT 0;
+-- 	Select COUNT(*) FROM HSCheckTable INTO n;
+-- 	WHILE i < n DO 
+-- 		Select * INTO @HSorderInd FROM HSCheckTable LIMIT i, 1;
+-- 		IF EXISTS(Select * From HiddenStop Where HiddenStop.OrderID = @HSorderInd) THEN
+-- 			Select HiddenStop.PricePerShare INTO @HSPrice From HiddenStop Where HiddenStop.OrderID = @HSorderInd;
+-- 			IF SharePrice < @HSPrice THEN
+-- 				call processCondOrder(@HSorderInd, @HSPrice, stockSym);
+-- 			END IF;
+-- 		END IF;
+-- 		i ++;
+-- 	END WHILE;
+-- END ^_^
+
+CREATE PROCEDURE checkTSOrder (IN ss VARCHAR(10), IN SharePrice FLOAT)
+BEGIN
+	DECLARE i INT;
+	DECLARE n INT;
+	DECLARE FinalTSPrice FLOAT;
+	DECLARE countExist INT;
+	SET i = 0;
+	SET n = 0;	
+	SET countExist = 0;
+
+CREATE OR REPLACE VIEW TSCheckTable AS
+		Select Orders.OrderID AS ID, Orders.StockSymbol AS StockSymbol
+		From Orders, TrailingStop
+		Where  Orders.OrderType = 'sell';	
+
+	Select COUNT(*) FROM TSCheckTable INTO n;
+	WHILE i < n DO 
+		SET countExist = 0;
+		Select ID INTO @TSorderInd FROM TSCheckTable WHERE TSCheckTable.StockSymbol = ss  LIMIT i, 1;
+		Select COUNT(*) From TrailingStop Where TrailingStop.OrderID = @TSorderInd INTO countExist; 
+		IF countExist > 0 THEN
+			Select TrailingStop.Percentage INTO @TSPercent From TrailingStop Where TrailingStop.OrderID = @TSorderInd;
+			Select TrailingStop.PricePerShare INTO @TSPrice From TrailingStop Where TrailingStop.OrderID = @TSorderInd;
+		 	SET FinalTSPrice = ((1- @TSPercent)*@TSPrice);
+			IF SharePrice < FinalTSPrice THEN
+				call queryCurrentPricePerShare(ss);
+				call processCondOrder(@TSorderInd, @price, ss);
+			END IF;
+		END IF;
+		SET i = i +1;
+	END WHILE;
+END ^_^
+
+
+CREATE PROCEDURE processCondOrder(IN ID INTEGER, IN price FLOAT, IN stockSym VARCHAR(10))
+BEGIN 
+	UPDATE Orders o
+	SET o.SharePrice = price
+	Where OrderID = ID;
+	call queryEmployeeSsnByOId(ID);
+	call queryCustomerSsnByOId(ID);
+	call queryCustomerAcctByOId(ID);
+	call queryNumShareByOrder(ID);
+	call CalcFee(price, @nos);
+	call addTransaction(ID, @e_ssn, @c_ssn, @o_custAct, stockSym, @fee, CURDATE(), CURTIME(),price,'sell');
+	-- Fee, DateProcessed,PricePerShare)
+
+
+END ^_^
+
 
 /*****************************************************************************  
 Supplment QUERIES for inserting
  *****************************************************************************/
+ CREATE PROCEDURE queryNumShareByOrder(IN o_id INTEGER)
+ BEGIN 
+ 	SELECT Orders.NumberOfShares INTO @nos
+ 	From Orders
+ 	Where Orders.OrderID = o_id;
+ END ^_^
+
+ CREATE PROCEDURE checkHSOrder(IN ss VARCHAR(10),IN  SharePrice FLOAT)
+ BEGIN 
+ 	DECLARE i INT;
+	DECLARE n INT;
+	DECLARE countExist INT;
+	SET countExist = 0;
+	SET i = 0;
+	SET n = 0;
+
+CREATE OR REPLACE VIEW HSCheckTable AS
+		Select Orders.OrderID AS ID, Orders.StockSymbol AS StockSymbol
+		From Orders, HiddenStop
+		Where Orders.OrderType = 'sell';
+
+	Select COUNT(*) FROM HSCheckTable INTO n;
+	WHILE i < n DO 
+		SET countExist = 0;
+		Select ID INTO @HSorderInd FROM HSCheckTable WHERE HSCheckTable.StockSymbol = ss  LIMIT i, 1;
+		Select COUNT(*) From HiddenStop Where HiddenStop.OrderID = @HSorderInd INTO countExist;
+		IF countExist>0 THEN
+			Select HiddenStop.PricePerShare INTO @HSPrice From HiddenStop Where HiddenStop.OrderID = @HSorderInd;
+			IF SharePrice < @HSPrice THEN
+				call queryPricePerShare(CURTIME(), CURDATE());
+				call processCondOrder(@HSorderInd, @price, ss);
+			END IF;
+		END IF;
+		SET i = i +1;
+	END WHILE;
+ END ^_^
+
+ CREATE PROCEDURE queryEmployeeSsnByOId(IN o_id INTEGER)
+ BEGIN 
+ 	SELECT Orders.EmployeeSSN INTO @e_ssn
+ 	From Orders
+ 	Where Orders.OrderID = o_id;
+ END^_^
+
+ CREATE PROCEDURE queryCustomerSsnByOId(IN o_id INTEGER)
+ BEGIN 
+ 	SELECT Orders.SocialSecurityNumber INTO @c_ssn
+ 	From Orders
+ 	Where Orders.OrderID = o_id;
+ END^_^
+
+ CREATE PROCEDURE queryCustomerAcctByOId(IN o_id INTEGER)
+ BEGIN 
+ 	SELECT Orders.AccountNumber INTO @o_custAct
+ 	From Orders
+ 	Where Orders.OrderID = o_id;
+ END^_^
+
+
 
 CREATE PROCEDURE queryOrderId(IN ssn INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE)
@@ -365,6 +498,16 @@ BEGIN
 		(o.OrderTime = o_time AND (o.EmployeeSSN = e_ssn AND
 		(o.AccountNumber = an AND (o.StockSymbol = ss)))));
 END ^_^
+
+CREATE PROCEDURE queryOrderId2(IN ssn INTEGER, IN o_time TIME, 
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN price FLOAT)
+BEGIN 
+	SELECT o.OrderID INTO @o_id FROM Orders o WHERE (o.SocialSecurityNumber = ssn AND 
+		(o.OrderTime = o_time AND (o.EmployeeSSN = e_ssn AND
+		(o.AccountNumber = an AND (o.StockSymbol = ss AND
+		 o.OrderType ='sell')))));
+END ^_^
+
 
 CREATE PROCEDURE CalcFee(IN price FLOAT, IN numShare INTEGER)
 BEGIN
@@ -438,24 +581,27 @@ BEGIN
   	WHERE SocialSecurityNumber = e_ssn; 
 End ^_^
 
-CREATE PROCEDURE updateStockTablePrice(IN stockSym VARCHAR(10), IN price FLOAT, IN s_date DATE,
+CREATE PROCEDURE updateStockTablePrice(IN Sym VARCHAR(10), IN price FLOAT, IN s_date DATE,
 	IN s_time TIME)
 BEGIN
 	UPDATE StockTable
 	SET SharePrice = price, StockDate = s_date, StockTime = s_time
-	WHERE StockSymbol = stockSym;
-	call queryNumShareAva(stockSym);
-	call addStockHistory(price, stockSym, s_date, s_time, @numShareAva);
+	WHERE StockSymbol = Sym;
+	call queryNumShareAva(Sym);
+	call addStockHistory(price, Sym, s_date, s_time, @numShareAva);
+	call queryCurrentPricePerShare(Sym);
+	call checkHSOrder(Sym, @price);
+	call checkTSOrder(Sym, @price);
 END ^_^
 
-CREATE PROCEDURE updateStockTableNumShare(IN stockSym VARCHAR(10), IN shareAvaliable INTEGER,
+CREATE PROCEDURE updateStockTableNumShare(IN Sym VARCHAR(10), IN shareAvaliable INTEGER,
 	IN s_date DATE, IN s_time TIME)
 BEGIN
 	UPDATE StockTable
 	SET NumberOfSharesAvaliable = shareAvaliable, StockDate = s_date, StockTime = s_time
-	WHERE StockSymbol = stockSym;
-	call queryCurrentPricePerShare(stockSym);
-	call addStockHistory(@price, stockSym, s_date, s_time, shareAvaliable);
+	WHERE StockSymbol = Sym;
+	call queryCurrentPricePerShare(Sym);
+	call addStockHistory(@price, Sym, s_date, s_time, shareAvaliable);
 END^_^
 
 CREATE PROCEDURE editPerson(IN p_fname VARCHAR(32),IN p_lname VARCHAR(32),IN p_addr VARCHAR(128),IN p_tele CHAR(13), IN p_zipcode INTEGER,IN p_ssn INTEGER)
@@ -482,10 +628,10 @@ BEGIN
 	WHERE SocialSecurityNumber = e_ssn;
 End ^_^
 
-CREATE PROCEDURE deleteStockTable(IN stockSym VARCHAR(10))
+CREATE PROCEDURE deleteStockTable(IN Sym VARCHAR(10))
 BEGIN 
 	DELETE FROM StockTable
-	WHERE StockSymbol = stockSym;
+	WHERE StockSymbol = Sym;
 END ^_^
 
 
@@ -591,7 +737,7 @@ BEGIN
 
 END ^_^
 
-CREATE PROCEDURE listRevenueByStock(IN e_ssn INTEGER,IN stockSym VARCHAR(10))
+CREATE PROCEDURE listRevenueByStock(IN e_ssn INTEGER,IN Sym VARCHAR(10))
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
 	DECLARE currentEmployeePosition VARCHAR(12);
@@ -603,7 +749,7 @@ BEGIN
 	IF currentEmployeePosition = 'Manager' THEN
 		SELECT O.StockSymbol,SUM(O.NumberOfShares*O.SharePrice)
 		FROM Orders O 
-		WHERE O.StockSymbol = stockSym;
+		WHERE O.StockSymbol = Sym;
 	END IF;
 
 END ^_^
