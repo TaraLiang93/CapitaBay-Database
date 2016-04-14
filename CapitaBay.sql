@@ -410,34 +410,6 @@ CREATE OR REPLACE VIEW TSCheckTable AS
 	END WHILE;
 END ^_^
 
-
-CREATE PROCEDURE processCondOrder(IN ID INTEGER, IN price FLOAT, IN stockSym VARCHAR(10))
-BEGIN 
-	UPDATE Orders o
-	SET o.SharePrice = price
-	Where OrderID = ID;
-	call queryEmployeeSsnByOId(ID);
-	call queryCustomerSsnByOId(ID);
-	call queryCustomerAcctByOId(ID);
-	call queryNumShareByOrder(ID);
-	call CalcFee(price, @nos);
-	call addTransaction(ID, @e_ssn, @c_ssn, @o_custAct, stockSym, @fee, CURDATE(), CURTIME(),price,'sell');
-	-- Fee, DateProcessed,PricePerShare)
-
-
-END ^_^
-
-
-/*****************************************************************************  
-Supplment QUERIES for inserting
- *****************************************************************************/
- CREATE PROCEDURE queryNumShareByOrder(IN o_id INTEGER)
- BEGIN 
- 	SELECT Orders.NumberOfShares INTO @nos
- 	From Orders
- 	Where Orders.OrderID = o_id;
- END ^_^
-
  CREATE PROCEDURE checkHSOrder(IN ss VARCHAR(10),IN  SharePrice FLOAT)
  BEGIN 
  	DECLARE i INT;
@@ -447,7 +419,7 @@ Supplment QUERIES for inserting
 	SET i = 0;
 	SET n = 0;
 
-CREATE OR REPLACE VIEW HSCheckTable AS
+	CREATE OR REPLACE VIEW HSCheckTable AS
 		Select Orders.OrderID AS ID, Orders.StockSymbol AS StockSymbol
 		From Orders, HiddenStop
 		Where Orders.OrderType = 'sell';
@@ -466,6 +438,30 @@ CREATE OR REPLACE VIEW HSCheckTable AS
 		END IF;
 		SET i = i +1;
 	END WHILE;
+ END ^_^
+
+CREATE PROCEDURE processCondOrder(IN ID INTEGER, IN price FLOAT, IN stockSym VARCHAR(10))
+BEGIN 
+	UPDATE Orders o
+	SET o.SharePrice = price
+	Where OrderID = ID;
+	call queryEmployeeSsnByOId(ID);
+	call queryCustomerSsnByOId(ID);
+	call queryCustomerAcctByOId(ID);
+	call queryNumShareByOrder(ID);
+	call CalcFee(price, @nos);
+	call addTransaction(ID, @e_ssn, @c_ssn, @o_custAct, stockSym, @fee, CURDATE(), CURTIME(),price,'sell');
+	-- Fee, DateProcessed,PricePerShare)
+END ^_^
+
+/*****************************************************************************  
+Supplment QUERIES for inserting
+ *****************************************************************************/
+ CREATE PROCEDURE queryNumShareByOrder(IN o_id INTEGER)
+ BEGIN 
+ 	SELECT Orders.NumberOfShares INTO @nos
+ 	From Orders
+ 	Where Orders.OrderID = o_id;
  END ^_^
 
  CREATE PROCEDURE queryEmployeeSsnByOId(IN o_id INTEGER)
@@ -488,8 +484,6 @@ CREATE OR REPLACE VIEW HSCheckTable AS
  	From Orders
  	Where Orders.OrderID = o_id;
  END^_^
-
-
 
 CREATE PROCEDURE queryOrderId(IN ssn INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE)
@@ -634,8 +628,11 @@ BEGIN
 	WHERE StockSymbol = Sym;
 END ^_^
 
-
-
+CREATE PROCEDURE deleteCustomer(IN c_ssn INTEGER)
+BEGIN
+	DELETE FROM Customer
+	WHERE SocialSecurityNumber = c_ssn;
+End ^_^
 
 
 /******************************************************************************  
@@ -754,7 +751,7 @@ BEGIN
 
 END ^_^
 
-CREATE PROCEDURE listRevenueByStockType(IN e_ssn INTEGER,IN stockty VARCHAR(10))
+CREATE PROCEDURE listRevenueByStockType(IN e_ssn INTEGER,IN stockty VARCHAR(32))
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
 	DECLARE currentEmployeePosition VARCHAR(12);
@@ -764,11 +761,11 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		SELECT DISTINCT S.StockType,SUM(O.NumberOfShares*O.SharePrice)
+		SELECT DISTINCT S.StockType,SUM(O.NumberOfShares*O.SharePrice) AS Revenue
 		FROM Orders O
 		INNER JOIN StockTable S 
 		ON O.StockSymbol = S.StockSymbol 
-		WHERE S.StockType = stockty;
+		WHERE S.StockType = stockty AND O.OrderType = 'buy';
 	END IF;
 
 END ^_^
@@ -783,22 +780,67 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		SELECT P.FirstName,P.LastName,O.SocialSecurityNumber,SUM(O.NumberOfShares*O.SharePrice)
-		FROM Orders O
+		SELECT P.FirstName,P.LastName,O.SocialSecurityNumber,SUM(O.NumberOfShares*O.SharePrice) AS Revenue		FROM Orders O
 		INNER JOIN Person P
 		ON P.SocialSecurityNumber = O.SocialSecurityNumber
-		WHERE O.SocialSecurityNumber = c_ssn;
+		WHERE O.SocialSecurityNumber = c_ssn AND O.OrderType = 'sell';
 	END IF;
 
 END ^_^
 
+CREATE PROCEDURE richestCustomer(IN e_ssn INTEGER)
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
 
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
 
+	IF currentEmployeePosition = 'Manager' THEN
+		SELECT O.SocialSecurityNumber,P.FirstName,P.LastName,SUM(O.NumberOfShares*O.SharePrice) AS Revenue
+		FROM Orders O 
+		INNER JOIN Person P
+		ON P.SocialSecurityNumber = O.SocialSecurityNumber
+		WHERE O.OrderType = 'sell'
+		GROUP BY O.SocialSecurityNumber
+		ORDER BY Revenue DESC
+		LIMIT 1;
+	END IF;
 
+END ^_^
 
--- recommendation for employees
--- select StockTable.StockType, COUNT(StockTable.StockType) AS NumberOfType FROM StockTable LEFT JOIN Transaction ON StockTable.StockSymbol = Transaction.StockSymbol WHERE Transaction.SocialSecurityNumber = 222222222 GROUP BY StockType ;
+CREATE PROCEDURE mostPopularStocks(IN e_ssn INTEGER)
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
+	DECLARE currentEmployeePosition VARCHAR(12);
 
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+		SELECT O.StockSymbol,S.StockName, S.NumberOfSharesAvaliable,S.SharePrice
+		FROM Orders O
+		INNER JOIN StockTable S
+		ON S.StockSymbol = O.StockSymbol
+		GROUP BY O.StockSymbol
+		ORDER BY COUNT(*) DESC;
+	END IF;
+
+END ^_^
+
+CREATE PROCEDURE listBestSellingStock(IN c_ssn INTEGER)
+BEGIN
+	SELECT StockTable.StockSymbol
+	FROM StockTable
+	INNER JOIN Transaction
+	ON StockTable.StockSymbol = Transaction.StockSymbol
+	GROUP BY StockSymbol
+	ORDER BY COUNT(*) DESC
+	LIMIT 5;
+	
+END ^_^
 /******************************************************************************  
 CustomerRep QUERIES
  ******************************************************************************/
@@ -810,7 +852,8 @@ BEGIN
 	FROM Employee E
 	WHERE E.SocialSecurityNumber = e_ssn;
 
-	IF currentEmployeePosition = 'CustomerRep' THEN
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
 		SELECT C.Email  
 		FROM Customer C;
 	END IF;
@@ -826,7 +869,8 @@ BEGIN
 	FROM Employee E
 	WHERE E.SocialSecurityNumber = e_ssn;
 
-	IF currentEmployeePosition = 'CustomerRep' THEN
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
 		call queryCustomerStocks(c_ssn);
 		call queryStockType(@oSS);
 		SELECT s.StockSymbol
@@ -836,6 +880,53 @@ BEGIN
 	
 	
 END ^_^
+
+CREATE PROCEDURE recordOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
+		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32))
+BEGIN
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
+		IF m_ot = 'Market' THEN
+			call addMarket(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot);
+		ELSEIF m_ot = 'MarketOnClose' THEN
+			call addMarketOnClose(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot);
+		ELSEIF m_ot = 'TrailingStop' THEN
+			call addTrailingStop(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot, m_percent);
+		ELSEIF m_ot = 'HiddenStop' THEN	
+			call addHiddenStop(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot, m_percent);
+		END IF;
+	END IF;
+END ^_^
+
+CREATE PROCEDURE manageCustomers(IN reqeust VARCHAR(12),IN e_ssn INTEGER,IN c_ssn INTEGER,
+	IN c_rate FLOAT,IN c_ccn CHAR(20),IN c_email VARCHAR(50))
+BEGIN
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'CustomerRep' 
+		OR currentEmployeePosition = 'Manager' THEN
+		IF reqeust = 'INSERT' THEN
+			call addCustomer(c_ssn, c_rate, c_ccn, c_email);
+		ELSEIF reqeust = 'UPDATE' THEN
+			call editCustomer(c_ssn, c_rate, c_ccn, c_email);
+		ELSEIF reqeust = 'DELETE' THEN
+			call deleteCustomer(c_ssn);
+		END IF;
+	END IF;
+
+END ^_^
+
+
 
 
 /******************************************************************************  
@@ -850,7 +941,7 @@ BEGIN
 	WHERE s.StockType = @st_type;
 END ^_^
 
-CREATE PROCEDURE recentOrderInfo(IN e_ssn INTEGER)
+CREATE PROCEDURE OrderHistory(IN e_ssn INTEGER)
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE )
 
@@ -872,24 +963,119 @@ BEGIN
 
 END ^_^
 
+CREATE PROCEDURE mostRecentStockAvailByType(IN e_ssn INTEGER,IN stockTy VARCHAR(32))
+BEGIN
+	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE )
+
+	-- DECLARE customer	 INTEGER;
+
+	-- SELECT COUNT(*) INTO customer
+	-- FROM Customer C
+	-- WHERE C.SocialSecurityNumber = e_ssn;
+
+	-- If there is atleast one customer 
+	-- IF customer > 0 THEN
+		SELECT S.StockSymbol,S.StockName,S.StockType,S.NumberOfSharesAvaliable,O.SocialSecurityNumber,O.AccountNumber,O.NumberOfShares,O.SharePrice,O.OrderType
+		FROM Orders O
+		INNER JOIN StockTable S 
+		ON O.StockSymbol = S.StockSymbol
+		WHERE O.SocialSecurityNumber = e_ssn AND S.StockType = stockty
+		ORDER BY O.OrderTime DESC,O.OrderDate DESC
+		LIMIT 1;
+
+	-- END IF;
+
+END ^_^
+
 CREATE PROCEDURE getCurrentStockHoldings(IN c_ssn INTEGER)
 BEGIN
-	SELECT a.StockSymbol, a.NumberOfShares - b.NumberOfShares AS TotalShares
-	FROM	(SELECT j.StockSymbol, j.NumberOfShares
-		FROM (SELECT o.OrderType, o.NumberOfShares, o.SocialSecurityNumber, o.StockSymbol
-			FROM Orders o
-			INNER JOIN Transaction t
-			ON o.OrderID = t.TransID) j
-		WHERE j.SocialSecurityNumber = c_ssn 
-		AND j.OrderType = 'buy') a,
-		(SELECT j.StockSymbol, j.NumberOfShares
-		FROM (SELECT o.OrderType, o.NumberOfShares, o.SocialSecurityNumber, o.StockSymbol
-			FROM Orders o
-			INNER JOIN Transaction t
-			ON o.OrderID = t.TransID) j
-		WHERE j.SocialSecurityNumber = c_ssn 
-		AND j.OrderType = 'sell') b
-	WHERE a.StockSymbol = b.StockSymbol;
+
+	DROP TABLE IF EXISTS bought;
+	CREATE TEMPORARY TABLE bought(
+		StockSymbol VARCHAR(10),
+		S INTEGER
+		);
+
+	DROP TABLE IF EXISTS sold;
+	CREATE TEMPORARY TABLE sold (
+		StockSymbol VARCHAR(10),
+		S INTEGER
+		);
+
+	INSERT INTO bought
+		SELECT O.StockSymbol, SUM(O.NumberOfShares)
+		FROM Orders O, Transaction T
+		WHERE T.TransID = O.OrderID AND O.SocialSecurityNumber = c_ssn AND O.OrderType = 'buy'
+		GROUP BY O.StockSymbol;
+
+	INSERT INTO sold
+		SELECT O.StockSymbol, SUM(O.NumberOfShares)
+		FROM Orders O, Transaction T
+		WHERE T.TransID = O.OrderID AND O.SocialSecurityNumber = c_ssn AND O.OrderType = 'sell'
+		GROUP BY O.StockSymbol;
+
+
+	-- IF ( EXISTS(SELECT 1 FROM bought))  THEN 
+		IF EXISTS (SELECT 1 FROM sold) THEN
+			SELECT DISTINCT O.StockSymbol, bought.S - sold.S AS TotalShares
+			FROM Orders O,bought
+			INNER JOIN sold
+			ON bought.StockSymbol = sold.StockSymbol 
+			WHERE O.StockSymbol = bought.StockSymbol;
+		ELSE 
+			SELECT DISTINCT O.StockSymbol, bought.S AS TotalShares
+			FROM Orders O
+			INNER JOIN bought 
+			ON bought.StockSymbol = O.StockSymbol;
+		END IF;
+
+END ^_^
+
+
+CREATE PROCEDURE getStocksByKeyword(IN keyword VARCHAR(50))
+BEGIN
+	SELECT s.StockSymbol
+	FROM StockTable s
+	WHERE s.StockName LIKE CONCAT("%", keyword, "%");
+END ^_^
+
+CREATE PROCEDURE getStockHistory(IN pastDate DATE, IN ss VARCHAR(10))
+BEGIN
+	SELECT s.SharePrice, s.StockDate
+	FROM StockHistory s
+	WHERE (s.StockDate <= CURDATE() 
+	AND s.StockDate >= pastDate)
+	AND s.StockSymbol = ss;
+END ^_^
+
+CREATE PROCEDURE getConditionalOrderHistory(IN o_id INTEGER)
+BEGIN	
+	DECLARE ss VARCHAR(10);
+	DECLARE tDate DATE;
+	
+	call queryOrderDate(o_id);
+	
+	SELECT o.StockSymbol INTO ss
+	FROM Orders o
+	WHERE o.OrderID = o_id;
+	
+	SELECT t.DateProcessed INTO tDate
+	FROM Transaction t
+	WHERE t.TransID = o_id;
+	
+	IF(tDate IS NULL) THEN 
+		SELECT s.SharePrice, s.StockDate
+		FROM StockHistory s
+		WHERE (s.StockDate <= CURDATE() 
+		AND s.StockDate >= @oDate)
+		AND s.StockSymbol = ss;
+	ELSE
+		SELECT s.SharePrice, s.StockDate
+		FROM StockHistory s
+		WHERE (s.StockDate <= tDate 
+		AND s.StockDate >= @oDate)
+		AND s.StockSymbol = ss;
+	END IF;
 END ^_^
 
 DELIMITER ;
