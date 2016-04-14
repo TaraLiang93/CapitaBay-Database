@@ -214,7 +214,7 @@ FOREIGN KEY(StockSymbol) REFERENCES StockTable(StockSymbol) ON DELETE NO ACTION 
 
 
 
-DELIMITER ^_^
+DELIMITER $$
 /******************************************************************************  
 TRIGGERS
  ******************************************************************************/
@@ -228,7 +228,7 @@ BEGIN
 	IF NEW.NumberOfShares > @numShareAva THEN
 		SET NEW.NumberOfShares = 0;
 	END IF;
-END ^_^
+END $$
 
 /******************************************************************************  
 INSERT QUERIES
@@ -247,14 +247,14 @@ BEGIN
 		SELECT @numShareAva + @oShare INTO newShareAva;
 	END IF;
 	call updateStockTableNumShare(t_ss, newShareAva, t_dp, t_t);
-END ^_^
+END $$
 
 
 CREATE PROCEDURE addLocation(IN lcl_zipCode INTEGER,IN lcl_city VARCHAR(32),lcl_state VARCHAR(20))
 BEGIN
 	INSERT INTO CAPITABAY.Location(ZipCode, City, State)
   	VALUES(lcl_zipCode,lcl_city,lcl_state);
-End ^_^
+End $$
 
 
 CREATE PROCEDURE addPerson(IN p_fname VARCHAR(32),IN p_lname VARCHAR(32),IN p_addr VARCHAR(128),IN p_tele CHAR(13),
@@ -262,27 +262,27 @@ CREATE PROCEDURE addPerson(IN p_fname VARCHAR(32),IN p_lname VARCHAR(32),IN p_ad
 BEGIN
 	INSERT INTO CAPITABAY.Person(FirstName, LastName, Address,Telephone, ZipCode, SocialSecurityNumber)
   	VALUES(p_fname,p_lname,p_addr,p_tele,p_zipcode,p_ssn);
-End ^_^
+End $$
 
 
 CREATE PROCEDURE addEmployee(IN e_ssn INTEGER,IN e_pos VARCHAR(12),IN e_date DATE,IN e_hrRate FLOAT)
 BEGIN
 	INSERT INTO CAPITABAY.Employee(SocialSecurityNumber,Position,StartDate,HourlyRate)
   	VALUES(e_ssn,e_pos,e_date,e_hrRate);
-End ^_^
+End $$
 	
 CREATE PROCEDURE addCustomer(IN c_ssn INTEGER,IN c_rate FLOAT,IN c_ccn CHAR(20),IN c_email VARCHAR(50))
 BEGIN
 	INSERT INTO CAPITABAY.Customer(SocialSecurityNumber,Rating,CreditCardNumber,Email)
   	VALUES(c_ssn,c_rate ,c_ccn,c_email);
-End ^_^
+End $$
 
 
 CREATE PROCEDURE addStockAccount(IN sa_ssn INTEGER,IN sa_acctNum CHAR(12),IN sa_acctDate DATE)
 BEGIN
 	INSERT INTO CAPITABAY.StockAccount(SocialSecurityNumber,AccountNumber,AccountCreateDate)
   	VALUES(sa_ssn,sa_acctNum,sa_acctDate );
-End ^_^
+End $$
 
 
 CREATE PROCEDURE addStockTable(IN st_ss VARCHAR(10),IN st_st VARCHAR(32),IN st_sn VARCHAR(32),
@@ -292,14 +292,14 @@ BEGIN
 		 StockDate, StockTime, NumberOfSharesAvaliable)
   	VALUES(st_ss,st_st,st_sn, price, s_date, s_time, NumberOfShares);
 	call addStockHistory(price, st_ss, s_date, s_time, NumberOfShares);
-End ^_^
+End $$
 
 
 CREATE PROCEDURE addStockHistory(IN is_sp FLOAT,IN is_ss VARCHAR(10),IN is_dat DATE, IN is_time TIME,IN is_nosa INTEGER)
 BEGIN
 	INSERT INTO CAPITABAY.StockHistory(SharePrice,StockSymbol,StockDate, StockTime, NumberOfSharesAvaliable)
   	VALUES(is_sp,is_ss,is_dat, is_time,is_nosa);
-End ^_^
+End $$
 
 CREATE PROCEDURE addOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN price FLOAT, IN o_type VARCHAR(32))
@@ -308,7 +308,7 @@ BEGIN
 	INSERT INTO CAPITABAY.Orders(SocialSecurityNumber, NumberOfShares, 
 		OrderTime, EmployeeSSN, AccountNumber, StockSymbol, OrderDate, SharePrice, OrderType)
 	VALUES(ssn, nos, o_time, e_ssn, an, ss, dat, price, o_type);
-END ^_^
+END $$
 
 
 
@@ -322,7 +322,7 @@ BEGIN
   	VALUES(@o_id);
   	call CalcFee(@price, nos);
   	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
-End ^_^
+End $$
 
 CREATE PROCEDURE addMarketOnClose(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32))
@@ -334,7 +334,7 @@ BEGIN
   	VALUES(@o_id);
   	call CalcFee(@price, nos);
   	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
-End ^_^
+End $$
 
 CREATE PROCEDURE addTrailingStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32),IN  m_percent FLOAT)
@@ -343,7 +343,7 @@ BEGIN
 	call queryOrderId(ssn, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.TrailingStop(OrderID,Percentage)
   	VALUES(@o_id,m_percent);
-End ^_^
+End $$
 
 CREATE PROCEDURE addHiddenStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN  m_pps FLOAT,IN m_ot VARCHAR(32))
@@ -352,7 +352,7 @@ BEGIN
 	call queryOrderId(ssn, nos, o_time, e_ssn, an, ss, dat);
 	INSERT INTO CAPITABAY.HiddenStop(OrderID,PricePerShare,PricePerShare)
   	VALUES(@o_id,m_pps);
-End ^_^
+End $$
 
 /*****************************************************************************  
 Supplment QUERIES for inserting
@@ -364,12 +364,12 @@ BEGIN
 	SELECT o.OrderID INTO @o_id FROM Orders o WHERE (o.SocialSecurityNumber = ssn AND 
 		(o.OrderTime = o_time AND (o.EmployeeSSN = e_ssn AND
 		(o.AccountNumber = an AND (o.StockSymbol = ss)))));
-END ^_^
+END $$
 
 CREATE PROCEDURE CalcFee(IN price FLOAT, IN numShare INTEGER)
 BEGIN
 	SELECT (price * numShare)*0.05 INTO @fee;
-END ^_^
+END $$
 
 CREATE PROCEDURE queryPricePerShare(IN o_time TIME, IN dat DATE)
 BEGIN 
@@ -377,66 +377,66 @@ BEGIN
 	FROM StockHistory i 
 	Where i.StockDate < dat AND i.StockTime < o_time 
 	ORDER BY i.StockDate DESC LIMIT 1;
-END ^_^
+END $$
 
 CREATE PROCEDURE queryCurrentPricePerShare(IN o_ss VARCHAR(10))
 BEGIN 
 	SELECT i.SharePrice INTO @price
 	FROM StockTable i 
 	Where i.StockSymbol = o_ss; 
-END ^_^
+END $$
 
 CREATE PROCEDURE queryNumShareAva(IN stockSym VARCHAR(10))
 BEGIN 
 	SELECT i.NumberOfSharesAvaliable INTO @numShareAva
 	FROM StockTable i
 	Where i.StockSymbol = stockSym;
-END ^_^
+END $$
 
 CREATE PROCEDURE queryOrderShares(IN o_id INTEGER)
 BEGIN 
 	SELECT o.NumberOfShares INTO @oShare
 	FROM Orders o
 	Where o.OrderID = o_id;
-END ^_^
+END $$
 
 CREATE PROCEDURE queryOrderDate(IN o_id INTEGER)
 BEGIN 
 	SELECT o.OrderDate INTO @oDate
 	FROM Orders o
 	Where o.OrderID = o_id;
-END ^_^
+END $$
 
 CREATE PROCEDURE queryOrderTime(IN o_id INTEGER)
 BEGIN 
 	SELECT o.OrderTime INTO @oTime
 	FROM Orders o
 	Where o.OrderID = o_id;
-END ^_^
+END $$
 
 CREATE PROCEDURE queryStockType(IN stockSym VARCHAR(10))
 BEGIN	
 	SELECT DISTINCT s.StockType INTO @st_type
 	FROM StockTable s
 	WHERE stockSym = s.StockSymbol;
-END ^_^
+END $$
 
 CREATE PROCEDURE queryCustomerStocks(IN c_ssn INTEGER)
 BEGIN 
 	SELECT o.StockSymbol INTO @oSS
 	FROM Orders o
 	Where o.SocialSecurityNumber = c_ssn;
-END ^_^
+END $$
 
 /******************************************************************************  
 UPDATE QUERIES
  ******************************************************************************/
-CREATE PROCEDURE editEmployee(IN e_ssn INTEGER,IN e_pos VARCHAR(12),IN e_date DATE,IN e_hrRate FLOAT)
+CREATE PROCEDURE editEmployee(IN e_ssn INTEGER,IN e_pos VARCHAR(12),IN e_hrRate FLOAT)
 BEGIN
 	UPDATE Employee
-	SET Position=e_pos, StartDate=e_date, HourlyRate=e_hrRate
+	SET Position=e_pos, HourlyRate=e_hrRate
   	WHERE SocialSecurityNumber = e_ssn; 
-End ^_^
+End $$
 
 CREATE PROCEDURE updateStockTablePrice(IN stockSym VARCHAR(10), IN price FLOAT, IN s_date DATE,
 	IN s_time TIME)
@@ -446,7 +446,7 @@ BEGIN
 	WHERE StockSymbol = stockSym;
 	call queryNumShareAva(stockSym);
 	call addStockHistory(price, stockSym, s_date, s_time, @numShareAva);
-END ^_^
+END $$
 
 CREATE PROCEDURE updateStockTableNumShare(IN stockSym VARCHAR(10), IN shareAvaliable INTEGER,
 	IN s_date DATE, IN s_time TIME)
@@ -456,21 +456,21 @@ BEGIN
 	WHERE StockSymbol = stockSym;
 	call queryCurrentPricePerShare(stockSym);
 	call addStockHistory(@price, stockSym, s_date, s_time, shareAvaliable);
-END^_^
+END$$
 
 CREATE PROCEDURE editPerson(IN p_fname VARCHAR(32),IN p_lname VARCHAR(32),IN p_addr VARCHAR(128),IN p_tele CHAR(13), IN p_zipcode INTEGER,IN p_ssn INTEGER)
 BEGIN
 	UPDATE Customer
 	SET FirstName = p_fname, LastName = p_lname, Address = p_addr, Telephone = p_tele, ZipCode = p_zipcode 
 	WHERE SocialSecurityNumber = p_ssn;
-End ^_^
+End $$
  
 CREATE PROCEDURE editCustomer(IN c_ssn INTEGER,IN c_rate FLOAT,IN c_ccn CHAR(20),IN c_email VARCHAR(50))
 BEGIN
 	UPDATE Customer
 	SET Rating = c_rate, CreditCardNumber = c_ccn, Email = c_email 
 	WHERE SocialSecurityNumber = c_ssn;
-End ^_^
+End $$
 
 
 /******************************************************************************  
@@ -480,19 +480,19 @@ CREATE PROCEDURE deleteEmployee(IN e_ssn INTEGER)
 BEGIN
 	DELETE FROM Employee
 	WHERE SocialSecurityNumber = e_ssn;
-End ^_^
+End $$
 
 CREATE PROCEDURE deleteStockTable(IN stockSym VARCHAR(10))
 BEGIN 
 	DELETE FROM StockTable
 	WHERE StockSymbol = stockSym;
-END ^_^
+END $$
 
 CREATE PROCEDURE deleteCustomer(IN c_ssn INTEGER)
 BEGIN
 	DELETE FROM Customer
 	WHERE SocialSecurityNumber = c_ssn;
-End ^_^
+End $$
 
 
 /******************************************************************************  
@@ -510,17 +510,16 @@ BEGIN
 	IF currentEmployeePosition = 'Manager' THEN
 		UPDATE StockHistory
 		SET SharePrice = new_sp
-		WHERE StockSymbol = is_ss;
+		WHERE  StockSymbol = is_ss;
 	END IF;
 
-END ^_^
+END $$
 
 
-CREATE PROCEDURE manageEmployees(IN reqeust VARCHAR(12),IN e_ssn1 INTEGER,IN e_ssn2 INTEGER,IN e_pos VARCHAR(12),IN e_date DATE,IN e_hrRate FLOAT)
+CREATE PROCEDURE manageEmployees(IN reqeust VARCHAR(12),IN e_ssn1 INTEGER,IN e_ssn2 INTEGER,IN e_pos VARCHAR(12),IN e_hrRate FLOAT)
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
 	DECLARE currentEmployeePosition VARCHAR(12);
-
 	SELECT E.Position INTO currentEmployeePosition
 	FROM Employee E
 	WHERE E.SocialSecurityNumber = e_ssn1;
@@ -529,13 +528,13 @@ BEGIN
 		IF reqeust = 'INSERT' THEN
 			call addEmployee(e_ssn2,e_pos,e_date,e_hrRate);
 		ELSEIF reqeust = 'UPDATE' THEN
-			call editEmployee(e_ssn2,e_pos,e_date,e_hrRate);
+			call editEmployee(e_ssn2,e_pos,e_hrRate);
 		ELSEIF reqeust = 'DELETE' THEN
 			call deleteEmployee(e_ssn2);
 		END IF;
 	END IF;
 
-END ^_^
+END $$
 
 CREATE PROCEDURE getSalesReportForMonth(IN e_ssn INTEGER, IN month INTEGER)
 BEGIN
@@ -552,7 +551,7 @@ BEGIN
 		WHERE MONTH(OrderDate) = month; -- Takes both integer and string
 	END IF;
 
-END ^_^
+END $$
 
 CREATE PROCEDURE listAllStocks(IN e_ssn INTEGER)
 BEGIN
@@ -569,7 +568,7 @@ BEGIN
 		WHERE S.StockSymbol = I.StockSymbol;
 	END IF;
 
-END ^_^
+END $$
 
 CREATE PROCEDURE listOrders(IN e_ssn INTEGER,IN ssn1 INTEGER,IN ss VARCHAR(10))
 BEGIN
@@ -592,7 +591,7 @@ BEGIN
 		END IF; 
 	END IF;
 
-END ^_^
+END $$
 
 CREATE PROCEDURE listRevenueByStock(IN e_ssn INTEGER,IN stockSym VARCHAR(10))
 BEGIN
@@ -609,7 +608,7 @@ BEGIN
 		WHERE O.StockSymbol = stockSym AND O.OrderType = 'buy';
 	END IF;
 
-END ^_^
+END $$
 
 CREATE PROCEDURE listRevenueByStockType(IN e_ssn INTEGER,IN stockty VARCHAR(32))
 BEGIN
@@ -628,7 +627,7 @@ BEGIN
 		WHERE S.StockType = stockty AND O.OrderType = 'buy';
 	END IF;
 
-END ^_^
+END $$
 
 CREATE PROCEDURE listRevenueCustomer(IN e_ssn INTEGER,IN c_ssn INTEGER)
 BEGIN
@@ -646,7 +645,7 @@ BEGIN
 		WHERE O.SocialSecurityNumber = c_ssn AND O.OrderType = 'sell';
 	END IF;
 
-END ^_^
+END $$
 
 CREATE PROCEDURE richestCustomer(IN e_ssn INTEGER)
 BEGIN
@@ -668,7 +667,7 @@ BEGIN
 		LIMIT 1;
 	END IF;
 
-END ^_^
+END $$
 
 CREATE PROCEDURE mostPopularStocks(IN e_ssn INTEGER)
 BEGIN
@@ -688,7 +687,7 @@ BEGIN
 		ORDER BY COUNT(*) DESC;
 	END IF;
 
-END ^_^
+END $$
 
 CREATE PROCEDURE listBestSellingStock(IN c_ssn INTEGER)
 BEGIN
@@ -700,7 +699,7 @@ BEGIN
 	ORDER BY COUNT(*) DESC
 	LIMIT 5;
 	
-END ^_^
+END $$
 /******************************************************************************  
 CustomerRep QUERIES
  ******************************************************************************/
@@ -719,7 +718,7 @@ BEGIN
 	END IF;
 	
 	
-END ^_^
+END $$
 
 CREATE PROCEDURE makeStockSuggestionList(IN e_ssn INTEGER, IN c_ssn INTEGER)
 BEGIN
@@ -739,7 +738,7 @@ BEGIN
 	END IF;
 	
 	
-END ^_^
+END $$
 
 CREATE PROCEDURE recordOrder(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN m_ot VARCHAR(32))
@@ -762,7 +761,7 @@ BEGIN
 			call addHiddenStop(ssn, nos, o_time, e_ssn, an, ss, dat, m_ot, m_percent);
 		END IF;
 	END IF;
-END ^_^
+END $$
 
 CREATE PROCEDURE manageCustomers(IN reqeust VARCHAR(12),IN e_ssn INTEGER,IN c_ssn INTEGER,
 	IN c_rate FLOAT,IN c_ccn CHAR(20),IN c_email VARCHAR(50))
@@ -784,7 +783,7 @@ BEGIN
 		END IF;
 	END IF;
 
-END ^_^
+END $$
 
 
 
@@ -799,7 +798,7 @@ BEGIN
 	SELECT s.StockSymbol
 	FROM StockTable s
 	WHERE s.StockType = @st_type;
-END ^_^
+END $$
 
 CREATE PROCEDURE OrderHistory(IN e_ssn INTEGER)
 BEGIN
@@ -821,7 +820,7 @@ BEGIN
 
 	END IF;
 
-END ^_^
+END $$
 
 CREATE PROCEDURE mostRecentStockAvailByType(IN e_ssn INTEGER,IN stockTy VARCHAR(32))
 BEGIN
@@ -845,7 +844,7 @@ BEGIN
 
 	-- END IF;
 
-END ^_^
+END $$
 
 CREATE PROCEDURE getCurrentStockHoldings(IN c_ssn INTEGER)
 BEGIN
@@ -889,7 +888,7 @@ BEGIN
 			ON bought.StockSymbol = O.StockSymbol;
 		END IF;
 
-END ^_^
+END $$
 
 
 CREATE PROCEDURE getStocksByKeyword(IN keyword VARCHAR(50))
@@ -897,7 +896,7 @@ BEGIN
 	SELECT s.StockSymbol
 	FROM StockTable s
 	WHERE s.StockName LIKE CONCAT("%", keyword, "%");
-END ^_^
+END $$
 
 CREATE PROCEDURE getStockHistory(IN pastDate DATE, IN ss VARCHAR(10))
 BEGIN
@@ -906,7 +905,7 @@ BEGIN
 	WHERE (s.StockDate <= CURDATE() 
 	AND s.StockDate >= pastDate)
 	AND s.StockSymbol = ss;
-END ^_^
+END $$
 
 CREATE PROCEDURE getConditionalOrderHistory(IN o_id INTEGER)
 BEGIN	
@@ -936,7 +935,7 @@ BEGIN
 		AND s.StockDate >= @oDate)
 		AND s.StockSymbol = ss;
 	END IF;
-END ^_^
+END $$
 
 DELIMITER ;
 
