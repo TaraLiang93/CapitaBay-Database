@@ -345,7 +345,7 @@ BEGIN
 	call queryOrderId2(ssn, o_time, e_ssn, an, ss, dat, @price);
 	INSERT INTO CAPITABAY.TrailingStop(OrderID,Percentage, PricePerShare)
   	VALUES(@o_id,m_percent,@price);
-End $$
+End ^_^
 
 CREATE PROCEDURE addHiddenStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE, IN  m_pps FLOAT)
@@ -355,7 +355,7 @@ BEGIN
 	call queryOrderId2(ssn, o_time, e_ssn, an, ss, dat, @price);
 	INSERT INTO CAPITABAY.HiddenStop(OrderID,PricePerShare)
   	VALUES(@o_id,m_pps);
-End $$
+End ^_^
 	
 /*****************************************************************************  
 HiddenStop or Trailing stop Procedure
@@ -375,7 +375,7 @@ HiddenStop or Trailing stop Procedure
 -- 		END IF;
 -- 		i ++;
 -- 	END WHILE;
--- END $$
+-- END ^_^
 
 CREATE PROCEDURE checkTSOrder (IN ss VARCHAR(10), IN SharePrice FLOAT)
 BEGIN
@@ -408,7 +408,7 @@ CREATE OR REPLACE VIEW TSCheckTable AS
 		END IF;
 		SET i = i +1;
 	END WHILE;
-END $$
+END ^_^
 
  CREATE PROCEDURE checkHSOrder(IN ss VARCHAR(10),IN  SharePrice FLOAT)
  BEGIN 
@@ -438,7 +438,7 @@ END $$
 		END IF;
 		SET i = i +1;
 	END WHILE;
- END $$
+ END ^_^
 
 CREATE PROCEDURE processCondOrder(IN ID INTEGER, IN price FLOAT, IN stockSym VARCHAR(10))
 BEGIN 
@@ -452,7 +452,7 @@ BEGIN
 	call CalcFee(price, @nos);
 	call addTransaction(ID, @e_ssn, @c_ssn, @o_custAct, stockSym, @fee, CURDATE(), CURTIME(),price,'sell');
 	-- Fee, DateProcessed,PricePerShare)
-END $$
+END ^_^
 
 /*****************************************************************************  
 Supplment QUERIES for inserting
@@ -462,28 +462,28 @@ Supplment QUERIES for inserting
  	SELECT Orders.NumberOfShares INTO @nos
  	From Orders
  	Where Orders.OrderID = o_id;
- END $$
+ END ^_^
 
  CREATE PROCEDURE queryEmployeeSsnByOId(IN o_id INTEGER)
  BEGIN 
  	SELECT Orders.EmployeeSSN INTO @e_ssn
  	From Orders
  	Where Orders.OrderID = o_id;
- END$$
+ END^_^
 
  CREATE PROCEDURE queryCustomerSsnByOId(IN o_id INTEGER)
  BEGIN 
  	SELECT Orders.SocialSecurityNumber INTO @c_ssn
  	From Orders
  	Where Orders.OrderID = o_id;
- END$$
+ END^_^
 
  CREATE PROCEDURE queryCustomerAcctByOId(IN o_id INTEGER)
  BEGIN 
  	SELECT Orders.AccountNumber INTO @o_custAct
  	From Orders
  	Where Orders.OrderID = o_id;
- END$$
+ END^_^
 
 CREATE PROCEDURE queryOrderId(IN ssn INTEGER, IN o_time TIME, 
 		IN e_ssn INTEGER,IN an INTEGER, IN ss VARCHAR(10), IN dat DATE)
@@ -500,7 +500,7 @@ BEGIN
 		(o.OrderTime = o_time AND (o.EmployeeSSN = e_ssn AND
 		(o.AccountNumber = an AND (o.StockSymbol = ss AND
 		 o.OrderType ='sell')))));
-END $$
+END ^_^
 
 
 CREATE PROCEDURE CalcFee(IN price FLOAT, IN numShare INTEGER)
@@ -586,7 +586,7 @@ BEGIN
 	call queryCurrentPricePerShare(Sym);
 	call checkHSOrder(Sym, @price);
 	call checkTSOrder(Sym, @price);
-END $$
+END ^_^
 
 CREATE PROCEDURE updateStockTableNumShare(IN Sym VARCHAR(10), IN shareAvaliable INTEGER,
 	IN s_date DATE, IN s_time TIME)
@@ -596,7 +596,7 @@ BEGIN
 	WHERE StockSymbol = Sym;
 	call queryCurrentPricePerShare(Sym);
 	call addStockHistory(@price, Sym, s_date, s_time, shareAvaliable);
-END$$
+END^_^
 
 CREATE PROCEDURE editPerson(IN p_fname VARCHAR(32),IN p_lname VARCHAR(32),IN p_addr VARCHAR(128),IN p_tele CHAR(13), IN p_zipcode INTEGER,IN p_ssn INTEGER)
 BEGIN
@@ -626,7 +626,7 @@ CREATE PROCEDURE deleteStockTable(IN Sym VARCHAR(10))
 BEGIN 
 	DELETE FROM StockTable
 	WHERE StockSymbol = Sym;
-END $$
+END ^_^
 
 CREATE PROCEDURE deleteCustomer(IN c_ssn INTEGER)
 BEGIN
@@ -935,7 +935,7 @@ CREATE PROCEDURE getStockSuggestionList(IN c_ssn INTEGER)
 BEGIN
 	call queryCustomerStocks(c_ssn);
 	call queryStockType(@oSS);
-	SELECT s.*
+	SELECT s.StockSymbol
 	FROM StockTable s
 	WHERE s.StockType = @st_type;
 END $$
