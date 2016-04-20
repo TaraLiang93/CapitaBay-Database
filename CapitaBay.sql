@@ -829,7 +829,7 @@ BEGIN
 
 END $$
 
-CREATE PROCEDURE listBestSellingStock(IN c_ssn INTEGER)
+CREATE PROCEDURE listBestSellingStock()
 BEGIN
 	SELECT StockTable.StockSymbol
 	FROM StockTable
@@ -940,7 +940,7 @@ BEGIN
 	WHERE s.StockType = @st_type;
 END $$
 
-CREATE PROCEDURE OrderHistory(IN e_ssn INTEGER)
+CREATE PROCEDURE OrderHistory(IN c_ssn INTEGER)
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE )
 
@@ -948,7 +948,7 @@ BEGIN
 
 	SELECT COUNT(*) INTO customer
 	FROM Customer C
-	WHERE C.SocialSecurityNumber = e_ssn;
+	WHERE C.SocialSecurityNumber = c_ssn;
 
 	-- If there is atleast one customer 
 	IF customer > 0 THEN
@@ -964,16 +964,6 @@ END $$
 
 CREATE PROCEDURE mostRecentStockAvailByType(IN e_ssn INTEGER,IN stockTy VARCHAR(32))
 BEGIN
-	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE )
-
-	-- DECLARE customer	 INTEGER;
-
-	-- SELECT COUNT(*) INTO customer
-	-- FROM Customer C
-	-- WHERE C.SocialSecurityNumber = e_ssn;
-
-	-- If there is atleast one customer 
-	-- IF customer > 0 THEN
 		SELECT S.StockSymbol,S.StockName,S.StockType,S.NumberOfSharesAvaliable,O.SocialSecurityNumber,O.AccountNumber,O.NumberOfShares,O.SharePrice,O.OrderType
 		FROM Orders O
 		INNER JOIN StockTable S 
@@ -981,9 +971,6 @@ BEGIN
 		WHERE O.SocialSecurityNumber = e_ssn AND S.StockType = stockty
 		ORDER BY O.OrderTime DESC,O.OrderDate DESC
 		LIMIT 1;
-
-	-- END IF;
-
 END $$
 
 CREATE PROCEDURE getCurrentStockHoldings(IN c_ssn INTEGER)
@@ -1031,14 +1018,17 @@ BEGIN
 END $$
 
 
-CREATE PROCEDURE getStocksByKeyword(IN keyword VARCHAR(50))
+CREATE PROCEDURE getStocksByKeyword(IN keyword VARCHAR(50), IN c_ssn INTEGER)
 BEGIN
-	SELECT s.StockSymbol
+
+	SELECT s.StockName, o.*
 	FROM StockTable s
-	WHERE s.StockName LIKE CONCAT("%", keyword, "%");
+	INNER JOIN Orders o 
+	ON o.StockSymbol = s.StockSymbol
+	WHERE s.StockName LIKE CONCAT("%", keyword, "%") AND o.SocialSecurityNumber=c_ssn;
 END $$
 
-CREATE PROCEDURE getStockHistory(IN pastDate DATE, IN ss VARCHAR(10))
+	CREATE PROCEDURE getStockHistory(IN pastDate DATE, IN ss VARCHAR(10))
 BEGIN
 	SELECT s.SharePrice, s.StockDate
 	FROM StockHistory s
