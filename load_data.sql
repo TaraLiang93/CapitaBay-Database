@@ -12,6 +12,6 @@ source ./data/MarketOnClose_data.sql;
 source ./data/TrailingStop_data.sql;
 source ./data/Transaction_data.sql;
 
--- source ./data/Market_dummydata.sql;
--- source ./data/StockHistory_SUPPLEMENT.sql;
--- source ./data/MarketOnClose_SUPPLEMENT.sql;
+source ./data/Market_dummydata.sql;
+source ./data/StockHistory_SUPPLEMENT.sql;
+source ./data/MarketOnClose_SUPPLEMENT.sql;

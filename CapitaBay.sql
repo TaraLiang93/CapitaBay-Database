@@ -792,6 +792,31 @@ BEGIN
 
 END $$
 
+CREATE PROCEDURE richestRep(IN e_ssn INTEGER)
+BEGIN
+	DECLARE currentEmployeePosition VARCHAR(12);
+
+	SELECT E.Position INTO currentEmployeePosition
+	FROM Employee E
+	WHERE E.SocialSecurityNumber = e_ssn;
+
+	IF currentEmployeePosition = 'Manager' THEN
+	SELECT P.Firstname, P.LastName, P.SocialSecurityNumber, SUM(T.Fee) AS Revenue
+	FROM Transaction T 
+	INNER JOIN Person P
+	ON P.SocialSecurityNumber = T.EmployeeSSN
+	INNER JOIN Employee E
+	ON E.SocialSecurityNumber = P.SocialSecurityNumber
+	WHERE E.Position = 'CustomerRep'
+	GROUP BY P.SocialSecurityNumber
+	ORDER BY Revenue DESC
+	LIMIT 1;
+
+	END IF;
+
+
+END $$
+
 CREATE PROCEDURE richestCustomer(IN e_ssn INTEGER)
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
