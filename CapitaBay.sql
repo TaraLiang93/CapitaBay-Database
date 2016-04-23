@@ -710,7 +710,7 @@ BEGIN
 
 END $$
 
-CREATE PROCEDURE listOrders(IN e_ssn INTEGER,IN ssn1 INTEGER,IN ss VARCHAR(10))
+CREATE PROCEDURE listOrders(IN e_ssn INTEGER,IN name VARCHAR(20),IN ss VARCHAR(10))
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
 	DECLARE currentEmployeePosition VARCHAR(12);
@@ -720,13 +720,15 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		IF ssn1 <> -1 THEN 
-			SELECT *
-			FROM Orders
-			WHERE SocialSecurityNumber = ssn1;
+		IF name <> "" THEN 
+			SELECT O.*
+			FROM Orders O
+			INNER JOIN Person P 
+			ON P.SocialSecurityNumber = O.SocialSecurityNumber
+			WHERE CONCAT(P.Firstname, ' ', P.LastName) LIKE CONCAT("%", name, "%");
 		ELSEIF ss <> "" THEN
 			SELECT * 
-			FROM Orders
+			FROM Orders O
 			WHERE StockSymbol = ss;
 		END IF; 
 	END IF;
