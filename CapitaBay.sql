@@ -745,14 +745,16 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		SELECT O.StockSymbol,SUM(O.NumberOfShares*O.SharePrice)
-		FROM Orders O 
-		WHERE O.StockSymbol = Sym;
+		SELECT S.StockSymbol,SUM(T.Fee) AS Revenue
+		FROM StockTable S 
+		INNER JOIN Transaction T 
+		ON S.StockSymbol = T.StockSymbol 
+		WHERE S.StockSymbol = Sym;
 	END IF;
 
 END $$
 
-CREATE PROCEDURE listRevenueByStockType(IN e_ssn INTEGER,IN stockty VARCHAR(32))
+CREATE PROCEDURE c(IN e_ssn INTEGER,IN stockty VARCHAR(32))
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
 	DECLARE currentEmployeePosition VARCHAR(12);
@@ -762,11 +764,11 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		SELECT DISTINCT S.StockType,SUM(O.NumberOfShares*O.SharePrice) AS Revenue
-		FROM Orders O
-		INNER JOIN StockTable S 
-		ON O.StockSymbol = S.StockSymbol 
-		WHERE S.StockType = stockty AND O.OrderType = 'buy';
+		SELECT DISTINCT S.StockType,SUM(T.Fee) AS Revenue
+		FROM StockTable S
+		INNER JOIN Transaction T 
+		ON S.StockSymbol = T.StockSymbol 
+		WHERE S.StockType = stockty;
 	END IF;
 
 END $$
@@ -781,10 +783,11 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		SELECT P.FirstName,P.LastName,O.SocialSecurityNumber,SUM(O.NumberOfShares*O.SharePrice) AS Revenue		FROM Orders O
+		SELECT P.FirstName,P.LastName,T.SocialSecurityNumber,SUM(T.Fee) AS Revenue
+		FROM Transaction T
 		INNER JOIN Person P
-		ON P.SocialSecurityNumber = O.SocialSecurityNumber
-		WHERE O.SocialSecurityNumber = c_ssn AND O.OrderType = 'sell';
+		ON P.SocialSecurityNumber = T.SocialSecurityNumber
+		WHERE P.SocialSecurityNumber = c_ssn;
 	END IF;
 
 END $$
