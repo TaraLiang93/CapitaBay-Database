@@ -24,9 +24,12 @@ FirstName 		VARCHAR(32)	 NOT NULL,
 LastName 		VARCHAR(32)	 NOT NULL,
 Address 		VARCHAR(128)	 NOT NULL,
 Telephone 		CHAR(13)	 	 NOT NULL,
+Username VARCHAR(32) NOT NULL,
+Password VARCHAR(100) NOT NULL,
 ZipCode	INTEGER,
 SocialSecurityNumber	 INTEGER,
 PRIMARY KEY(SocialSecurityNumber),
+UNIQUE(Username),
 FOREIGN KEY(ZipCode) REFERENCES Location(ZipCode)
 	ON DELETE NO ACTION
 	ON UPDATE CASCADE
@@ -259,10 +262,10 @@ End $$
 
 
 CREATE PROCEDURE addPerson(IN p_fname VARCHAR(32),IN p_lname VARCHAR(32),IN p_addr VARCHAR(128),IN p_tele CHAR(13),
- IN p_zipcode INTEGER,IN p_ssn INTEGER)
+ IN p_zipcode INTEGER,IN p_ssn INTEGER, IN username VARCHAR(32), IN password VARCHAR(100))
 BEGIN
-	INSERT INTO CAPITABAY.Person(FirstName, LastName, Address,Telephone, ZipCode, SocialSecurityNumber)
-  	VALUES(p_fname,p_lname,p_addr,p_tele,p_zipcode,p_ssn);
+	INSERT INTO CAPITABAY.Person(FirstName, LastName, Address,Telephone, ZipCode, SocialSecurityNumber, Username, Password)
+  	VALUES(p_fname,p_lname,p_addr,p_tele,p_zipcode,p_ssn, username, password);
 End $$
 
 
@@ -376,6 +379,13 @@ HiddenStop or Trailing stop Procedure
 -- 		i ++;
 -- 	END WHILE;
 -- END $$
+
+CREATE PROCEDURE validUser(IN username VARCHAR(32), IN password VARCHAR(100))
+BEGIN
+	SELECT COUNT(*) AS validUserReturn
+	FROM Person P
+	WHERE ((P.Username = username)&&(P.Password = password));
+END $$
 
 CREATE PROCEDURE checkTSOrder (IN ss VARCHAR(10), IN SharePrice FLOAT)
 BEGIN
@@ -613,9 +623,9 @@ BEGIN
 End $$
 
 
-/******************************************************************************  
-DELETE QUERIES 
- ******************************************************************************/
+-- *****************************************************************************  
+-- DELETE QUERIES 
+--  *****************************************************************************
 CREATE PROCEDURE deleteEmployee(IN e_ssn INTEGER)
 BEGIN
 	DELETE FROM Employee
