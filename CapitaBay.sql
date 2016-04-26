@@ -1068,6 +1068,16 @@ BEGIN
 	WHERE s.StockName LIKE CONCAT("%", keyword, "%") AND o.SocialSecurityNumber=c_ssn;
 END $$
 
+CREATE PROCEDURE getStockByKeyword(IN keyword VARCHAR(50))
+BEGIN
+
+	SELECT s.StockName, s.*
+	FROM StockTable s
+	INNER JOIN Orders o 
+	ON o.StockSymbol = s.StockSymbol
+	WHERE s.StockName LIKE CONCAT("%", keyword, "%");
+END $$
+
 	CREATE PROCEDURE getStockHistory(IN pastDate DATE, IN ss VARCHAR(10))
 BEGIN
 	SELECT s.SharePrice, s.StockDate
