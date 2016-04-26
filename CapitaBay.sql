@@ -1073,8 +1073,6 @@ BEGIN
 
 	SELECT s.StockName, s.*
 	FROM StockTable s
-	INNER JOIN Orders o 
-	ON o.StockSymbol = s.StockSymbol
 	WHERE s.StockName LIKE CONCAT("%", keyword, "%");
 END $$
 
