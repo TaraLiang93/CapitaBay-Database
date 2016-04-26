@@ -382,7 +382,7 @@ HiddenStop or Trailing stop Procedure
 
 CREATE PROCEDURE validUser(IN username VARCHAR(32), IN password VARCHAR(100))
 BEGIN
-	SELECT COUNT(*) AS validUserReturn
+	SELECT P.SocialSecurityNumber, P.Username
 	FROM Person P
 	WHERE ((P.Username = username)&&(P.Password = password));
 END $$
