@@ -713,9 +713,8 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		SELECT DISTINCT S.StockSymbol, S.StockType,S.StockName, I.SharePrice, I.StockDate,I.NumberOfSharesAvaliable
-		FROM StockTable S, StockHistory I
-		WHERE S.StockSymbol = I.StockSymbol;
+		SELECT DISTINCT S.StockSymbol, S.StockType,S.StockName, S.SharePrice, S.StockDate,S.NumberOfSharesAvaliable
+		FROM StockTable S;
 	END IF;
 
 END $$
