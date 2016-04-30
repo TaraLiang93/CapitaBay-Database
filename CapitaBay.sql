@@ -994,7 +994,7 @@ BEGIN
 	IF customer > 0 THEN
 		SELECT *
 		FROM Orders O 
-		WHERE O.SocialSecurityNumber = e_ssn
+		WHERE O.SocialSecurityNumber = c_ssn
 		ORDER BY OrderTime ASC,OrderDate DESC
 		LIMIT 10;
 
@@ -1043,13 +1043,13 @@ BEGIN
 
 	-- IF ( EXISTS(SELECT 1 FROM bought))  THEN 
 		IF EXISTS (SELECT 1 FROM sold) THEN
-			SELECT DISTINCT O.StockSymbol, bought.S - sold.S AS TotalShares
+			SELECT DISTINCT O.StockSymbol, bought.S - sold.S AS TotalShares, O.AccountNumber
 			FROM Orders O,bought
 			INNER JOIN sold
 			ON bought.StockSymbol = sold.StockSymbol 
 			WHERE O.StockSymbol = bought.StockSymbol;
 		ELSE 
-			SELECT DISTINCT O.StockSymbol, bought.S AS TotalShares
+			SELECT DISTINCT O.StockSymbol, bought.S AS TotalShares, O.AccountNumber
 			FROM Orders O
 			INNER JOIN bought 
 			ON bought.StockSymbol = O.StockSymbol;
@@ -1066,14 +1066,6 @@ BEGIN
 	INNER JOIN Orders o 
 	ON o.StockSymbol = s.StockSymbol
 	WHERE s.StockName LIKE CONCAT("%", keyword, "%") AND o.SocialSecurityNumber=c_ssn;
-END $$
-
-CREATE PROCEDURE getStockByKeyword(IN keyword VARCHAR(50))
-BEGIN
-
-	SELECT s.StockName, s.*
-	FROM StockTable s
-	WHERE s.StockName LIKE CONCAT("%", keyword, "%");
 END $$
 
 	CREATE PROCEDURE getStockHistory(IN pastDate DATE, IN ss VARCHAR(10))
