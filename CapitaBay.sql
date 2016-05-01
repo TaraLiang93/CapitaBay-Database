@@ -763,7 +763,7 @@ BEGIN
 
 END $$
 
-CREATE PROCEDURE c(IN e_ssn INTEGER,IN stockty VARCHAR(32))
+CREATE PROCEDURE listRevenueByStockType(IN e_ssn INTEGER,IN stockty VARCHAR(32))
 BEGIN
 	-- IF(SELECT E.SocialSecurityNumber FROM Employee E WHERE ) 
 	DECLARE currentEmployeePosition VARCHAR(12);
@@ -810,7 +810,7 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-	SELECT P.Firstname, P.LastName, P.SocialSecurityNumber, SUM(T.Fee) AS Revenue
+	SELECT P.FirstName, P.LastName, P.SocialSecurityNumber, SUM(T.Fee) AS Revenue
 	FROM Transaction T 
 	INNER JOIN Person P
 	ON P.SocialSecurityNumber = T.EmployeeSSN
