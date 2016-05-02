@@ -78,7 +78,7 @@ AccountCreateDate DATE NOT NULL,
 -- PRIMARY KEY(SocialSecurityNumber),
 PRIMARY KEY(SocialSecurityNumber,AccountNumber),
 FOREIGN KEY(SocialSecurityNumber) REFERENCES Customer(SocialSecurityNumber)
-	ON DELETE NO ACTION
+	ON DELETE CASCADE
 	ON UPDATE CASCADE
 );
 
