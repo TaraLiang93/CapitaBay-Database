@@ -325,7 +325,12 @@ BEGIN
 	INSERT INTO CAPITABAY.Market(OrderID)
   	VALUES(@o_id);
   	call CalcFee(@price, nos);
-  	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
+  	-- If(("sell" = m_ot) IS true) then
+  	-- call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
+  	
+  	-- else
+  	 call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
+  	-- end if;
 End $$
 
 CREATE PROCEDURE addMarketOnClose(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
@@ -337,7 +342,10 @@ BEGIN
 	INSERT INTO CAPITABAY.MarketOnClose(OrderID)
   	VALUES(@o_id);
   	call CalcFee(@price, nos);
+  	-- If(("sell" = m_ot) IS true) then
   	call addTransaction(@o_id, e_ssn, ssn, an, ss, @fee, dat, o_time, @price, m_ot);
+  	
+  	-- else call addTransaction(@o_id, e_ssn, ssn, an, ss, 0, dat, o_time, @price, m_ot);
 End $$
 
 CREATE PROCEDURE addTrailingStop(IN ssn INTEGER, IN nos INTEGER, IN o_time TIME, 
@@ -992,9 +1000,9 @@ BEGIN
 	-- If there is atleast one customer 
 	IF customer > 0 THEN
 		SELECT *
-		FROM Orders O 
-		WHERE O.SocialSecurityNumber = c_ssn
-		ORDER BY OrderTime ASC,OrderDate DESC
+		FROM Orders T 
+		WHERE T.SocialSecurityNumber = c_ssn
+		ORDER BY DateProcessed DESC
 		LIMIT 10;
 
 	END IF;
