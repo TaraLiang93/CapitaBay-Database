@@ -578,7 +578,7 @@ END $$
 
 CREATE PROCEDURE queryCustomerStocks(IN c_ssn INTEGER)
 BEGIN 
-	SELECT o.StockSymbol INTO @oSS
+	SELECT MAX(o.StockSymbol) INTO @oSS
 	FROM Orders o
 	Where o.SocialSecurityNumber = c_ssn;
 END $$
@@ -1000,7 +1000,7 @@ BEGIN
 	-- If there is atleast one customer 
 	IF customer > 0 THEN
 		SELECT *
-		FROM Orders T 
+		FROM Transaction T 
 		WHERE T.SocialSecurityNumber = c_ssn
 		ORDER BY DateProcessed DESC
 		LIMIT 10;
