@@ -736,7 +736,7 @@ BEGIN
 	FROM Employee E
 	WHERE E.SocialSecurityNumber = e_ssn;
 
-	IF currentEmployeePosition = 'Manager' THEN
+	-- IF currentEmployeePosition = 'Manager' THEN
 		IF name <> "" THEN 
 			SELECT O.*
 			FROM Orders O
@@ -748,7 +748,7 @@ BEGIN
 			FROM Orders O
 			WHERE StockSymbol = ss;
 		END IF; 
-	END IF;
+	-- END IF;
 
 END $$
 
@@ -844,14 +844,7 @@ BEGIN
 	WHERE E.SocialSecurityNumber = e_ssn;
 
 	IF currentEmployeePosition = 'Manager' THEN
-		SELECT O.SocialSecurityNumber,P.FirstName,P.LastName,SUM(O.NumberOfShares*O.SharePrice) AS Revenue
-		FROM Orders O 
-		INNER JOIN Person P
-		ON P.SocialSecurityNumber = O.SocialSecurityNumber
-		WHERE O.OrderType = 'sell'
-		GROUP BY O.SocialSecurityNumber
-		ORDER BY Revenue DESC
-		LIMIT 1;
+		SELECT T.SocialSecurityNumber,P.FirstName,P.LastName,SUM(T.Fee) AS Revenue FROM Transaction T  INNER JOIN Person P ON P.SocialSecurityNumber = T.SocialSecurityNumber GROUP BY T.SocialSecurityNumber ORDER BY Revenue DESC LIMIT 1;
 	END IF;
 
 END $$
@@ -919,7 +912,7 @@ BEGIN
 		OR currentEmployeePosition = 'Manager' THEN
 		call queryCustomerStocks(c_ssn);
 		call queryStockType(@oSS);
-		SELECT s.StockSymbol
+		SELECT s.StockSymbol, s.StockName, s.SharePrice, s.NumberOfSharesAvaliable
 		FROM StockTable s
 		WHERE s.StockType = @st_type;
 	END IF;
